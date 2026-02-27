@@ -1,0 +1,3067 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>智农云 · 农业管理平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════ CSS VARIABLES ═══════════════ */
+:root {
+  --bg:          #F7FAF7;
+  --bg2:         #FFFFFF;
+  --surface:     #EEF6EE;
+  --card:        #FFFFFF;
+  --card2:       #F2F8F2;
+  --border:      rgba(46,125,50,0.14);
+  --border2:     rgba(46,125,50,0.08);
+  --green:       #2E7D32;
+  --green-light: #4CAF50;
+  --green-dim:   rgba(46,125,50,0.08);
+  --amber:       #E65100;
+  --amber-dim:   rgba(230,81,0,0.08);
+  --red:         #C62828;
+  --red-dim:     rgba(198,40,40,0.08);
+  --blue:        #1565C0;
+  --blue-dim:    rgba(21,101,192,0.08);
+  --lime:        #33691E;
+  --lime-dim:    rgba(51,105,30,0.08);
+  --text:        #1B2E1B;
+  --text2:       #5A7A5A;
+  --text3:       #9DB89C;
+  --mono:        'DM Mono', monospace;
+  --sans:        'Noto Sans SC', sans-serif;
+  --r:           12px;
+  --r2:          20px;
+  --nav-h:       64px;
+  --header-h:    56px;
+}
+
+/* ═══════════════ RESET ═══════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: #1B2E1B; font-family: var(--sans); font-size: 14px; -webkit-font-smoothing: antialiased; }
+button { border: none; background: none; cursor: pointer; font-family: var(--sans); color: inherit; }
+input, textarea { font-family: var(--sans); color: #1B2E1B; background: none; border: none; outline: none; }
+svg { fill: currentColor; }
+
+/* ═══════════════ APP SHELL ═══════════════ */
+#app { position: fixed; inset: 0; overflow: hidden; }
+.page { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: #F7FAF7; transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .3s ease; }
+.page.hidden { transform: translateX(100%); opacity: 0; pointer-events: none; }
+.page.prev  { transform: translateX(-30%); opacity: 0; pointer-events: none; }
+.page-body  { flex: 1; overflow-y: auto; padding-bottom: calc(var(--nav-h) + 16px); }
+.page-body::-webkit-scrollbar { display: none; }
+
+/* ═══════════════ HEADER ═══════════════ */
+.hdr {
+  height: var(--header-h); display: flex; align-items: center; padding: 0 16px;
+  background: #FFFFFF;
+  border-bottom: 1px solid var(--border2); box-shadow: 0 1px 4px rgba(46,125,50,.06); flex-shrink: 0; position: relative; z-index: 10;
+}
+.hdr-back { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #FFFFFF; }
+.hdr-title { flex: 1; text-align: center; font-size: 16px; font-weight: 600; letter-spacing: .02em; }
+.hdr-action { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+
+/* ═══════════════ BOTTOM NAV ═══════════════ */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-h);
+  background: #FFFFFF; border-top: 1px solid var(--border); box-shadow: 0 -2px 12px rgba(46,125,50,.06);
+  display: flex; align-items: center; z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; transition: .2s; opacity: .45; }
+.nav-item.active { opacity: 1; }
+.nav-item.active .nav-icon { color: #2E7D32; }
+.nav-icon { font-size: 22px; line-height: 1; transition: filter .2s; }
+.nav-label { font-size: 10px; font-weight: 500; letter-spacing: .03em; }
+.nav-item.active .nav-label { color: #2E7D32; }
+.nav-dot { position: absolute; top: 6px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--red); border: 1.5px solid var(--bg2); }
+
+/* ═══════════════ CARDS ═══════════════ */
+.card { background: #FFFFFF; border: 1px solid rgba(46,125,50,.09); border-radius: var(--r2); overflow: hidden; position: relative; box-shadow: 0 2px 12px rgba(46,125,50,.06); }
+.card::before { content:''; display:none; }
+.card-p { padding: 16px; }
+.card-hd { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border2); }
+.card-hd-title { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #5A7A5A; }
+
+/* ═══════════════ BADGES ═══════════════ */
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; font-family: var(--mono); }
+.badge-green { background: rgba(46,125,50,.10); color: #2E7D32; }
+.badge-amber { background: rgba(230,81,0,.08); color: #E65100; }
+.badge-red   { background: rgba(198,40,40,.08);   color: #C62828; }
+.badge-blue  { background: rgba(21,101,192,.08);  color: #1565C0; }
+
+/* ═══════════════ BUTTONS ═══════════════ */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 20px; border-radius: var(--r); font-size: 14px; font-weight: 500; transition: .15s; }
+.btn-primary { background: linear-gradient(135deg, #2E7D32, #43A047); color: #FFFFFF; box-shadow: 0 4px 16px rgba(46,125,50,.28); }
+.btn-primary:active { background: #1B5E20; }
+.btn-ghost { background: rgba(46,125,50,.06); color: #2E7D32; border: 1px solid rgba(46,125,50,.2); }
+.btn-ghost:active { background: rgba(46,125,50,.14); }
+.btn-danger { background: rgba(198,40,40,.08); color: #C62828; }
+.btn-full { width: 100%; }
+
+/* ═══════════════ INPUTS ═══════════════ */
+.field { background: #F7FAF7; border: 1.5px solid rgba(46,125,50,.2); border-radius: var(--r); padding: 12px 14px; width: 100%; display: flex; align-items: center; gap: 10px; transition: border-color .2s; }
+.field:focus-within { border-color: #2E7D32; background: #FFFFFF; }
+.field input { flex: 1; font-size: 15px; color: #1B2E1B; }
+.field input::placeholder { color: #9DB89C; }
+
+/* ═══════════════ STAT GRID ═══════════════ */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat-box { background: #FFFFFF; border: 1px solid rgba(46,125,50,.10); border-radius: var(--r); padding: 14px; box-shadow: 0 1px 6px rgba(46,125,50,.06); }
+.stat-val { font-family: var(--mono); font-size: 22px; font-weight: 500; }
+.stat-label { font-size: 11px; color: #5A7A5A; margin-top: 4px; }
+.stat-trend { font-family: var(--mono); font-size: 11px; margin-top: 6px; }
+
+/* ═══════════════ LIST ROW ═══════════════ */
+.list-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid rgba(46,125,50,.08); }
+.list-row:last-child { border-bottom: none; }
+.list-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.list-body { flex: 1; min-width: 0; }
+.list-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-sub { font-size: 12px; color: #5A7A5A; margin-top: 2px; }
+.list-right { text-align: right; flex-shrink: 0; }
+
+/* ═══════════════ PROGRESS BAR ═══════════════ */
+.prog-wrap { background: #E8F5E9; border-radius: 4px; height: 6px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #2E7D32, #66BB6A); transition: width 1s ease; }
+
+/* ═══════════════ SECTION ═══════════════ */
+.sec { padding: 0 16px; margin-top: 20px; }
+.sec-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sec-title { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #5A7A5A; }
+.sec-more { font-size: 12px; color: #2E7D32; }
+
+/* ═══════════════ LOADING ═══════════════ */
+.spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: #2E7D32; border-radius: 50%; animation: spin .6s linear infinite; margin: 40px auto; display: block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════ TOAST ═══════════════ */
+#toast { position: fixed; bottom: calc(var(--nav-h) + 20px); left: 50%; transform: translateX(-50%) translateY(20px); background: #FFFFFF; border: 1px solid var(--border); padding: 10px 20px; border-radius: 24px; font-size: 13px; z-index: 999; opacity: 0; transition: all .3s; white-space: nowrap; pointer-events: none; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ═══════════════ MAP PLACEHOLDER ═══════════════ */
+.map-box {
+  background: #EEF6EE; border-radius: var(--r); overflow: hidden; position: relative;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 29px, rgba(46,125,50,.07) 29px, rgba(46,125,50,.07) 30px),
+                    repeating-linear-gradient(90deg, transparent, transparent 29px, rgba(46,125,50,.07) 29px, rgba(46,125,50,.07) 30px);
+}
+
+/* ═══════════════ NDVI COLOR BAR ═══════════════ */
+.ndvi-bar { height: 16px; border-radius: 4px; background: linear-gradient(90deg, #C62828, #E65100, #F9A825, #66BB6A, #2E7D32); position: relative; }
+.ndvi-pointer { position: absolute; top: -3px; width: 3px; height: 22px; background: #2E7D32; border-radius: 2px; transition: left .5s ease; }
+
+/* ═══════════════ PULSE DOT ═══════════════ */
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--green); position: relative; display: inline-block; }
+.pulse::after { content:''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2)} }
+
+/* ═══════════════ DRONE TRACKER ═══════════════ */
+.drone-track { position: relative; height: 240px; overflow: hidden; border-radius: var(--r); background: #EEF6EE;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(46,125,50,.06) 19px, rgba(46,125,50,.06) 20px),
+                    repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(46,125,50,.06) 19px, rgba(46,125,50,.06) 20px);
+}
+.drone-icon { position: absolute; font-size: 24px; transition: left .8s ease, top .8s ease; transform: translate(-50%,-50%); filter: drop-shadow(0 2px 6px rgba(46,125,50,.4)); }
+.drone-path { position: absolute; inset: 0; }
+.flight-line { stroke: rgba(46,125,50,.45); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+.field-poly { fill: rgba(46,125,50,.08); stroke: #2E7D32; stroke-width: 1; }
+
+/* ═══════════════ GAUGE ═══════════════ */
+.gauge-wrap { text-align: center; }
+.gauge-svg { display: block; margin: 0 auto; }
+
+/* ═══════════════ CHIP ═══════════════ */
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--border); background: #FFFFFF; cursor: pointer; transition: .15s; color: #5A7A5A; }
+.chip.active { background: rgba(46,125,50,.10); border-color: #2E7D32; color: #2E7D32; font-weight:600; }
+
+/* ═══════════════ ALERT ITEM ═══════════════ */
+.alert-item { padding: 12px 14px; border-radius: var(--r); display: flex; gap: 12px; align-items: flex-start; }
+.alert-item + .alert-item { margin-top: 8px; }
+
+/* ═══════════════ MODAL ═══════════════ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(27,46,27,.45); z-index: 200; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-sheet { background: #FFFFFF; border-radius: 24px 24px 0 0; width: 100%; padding: 20px 20px 40px; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); border-top: 1px solid var(--border); box-shadow: 0 -8px 40px rgba(46,125,50,.12); }
+.modal-overlay.open .modal-sheet { transform: translateY(0); }
+.modal-handle { width: 40px; height: 4px; background: #C8E6C9; border-radius: 2px; margin: 0 auto 20px; }
+
+/* ═══════════════ LOGIN PAGE ═══════════════ */
+#page-login { justify-content: flex-end; padding-bottom: 0; }
+.login-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(46,125,50,.18) 0%, rgba(102,187,106,.08) 50%, transparent 75%),
+              linear-gradient(180deg, #E8F5E9 0%, #F7FAF7 60%, #FFFFFF 100%);
+}
+.login-art { position: absolute; top: 0; left: 0; right: 0; height: 45vh; display: flex; align-items: center; justify-content: center; }
+.login-logo { font-size: 56px; filter: drop-shadow(0 4px 20px rgba(46,125,50,.25)); }
+.login-brand { position: absolute; bottom: 60px; left: 0; right: 0; text-align: center; }
+.login-brand-name { font-size: 28px; font-weight: 700; letter-spacing: .1em; }
+.login-brand-sub { font-size: 12px; color: #5A7A5A; letter-spacing: .2em; text-transform: uppercase; margin-top: 4px; }
+.login-form { background: #FFFFFF; border-radius: 28px 28px 0 0; padding: 28px 24px 48px; position: relative; z-index: 1; box-shadow: 0 -8px 40px rgba(46,125,50,.10); }
+.login-tab { display: flex; background: #F2F8F2; border-radius: var(--r); padding: 4px; margin-bottom: 24px; border: 1px solid rgba(46,125,50,.12); }
+.login-tab button { flex: 1; padding: 8px; border-radius: 8px; font-size: 14px; font-weight: 500; transition: .2s; color: #5A7A5A; }
+.login-tab button.active { background: #2E7D32; color: #FFFFFF; }
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+.fade-up { animation: fadeUp .4s ease both; }
+.fade-up:nth-child(1){animation-delay:.0s}
+.fade-up:nth-child(2){animation-delay:.06s}
+.fade-up:nth-child(3){animation-delay:.12s}
+.fade-up:nth-child(4){animation-delay:.18s}
+.fade-up:nth-child(5){animation-delay:.24s}
+
+@keyframes countUp { from{opacity:0} to{opacity:1} }
+
+/* ═══════════════ HOME HERO ═══════════════ */
+.home-hero {
+  padding: 20px 16px 24px;
+  background: linear-gradient(145deg, #E8F5E9 0%, #F1F8E9 60%, #FFFFFF 100%);
+  border-bottom: 1px solid rgba(46,125,50,.10);
+}
+.home-greeting { font-size: 12px; color: #5A7A5A; letter-spacing: .06em; text-transform: uppercase; }
+.home-name { font-size: 22px; font-weight: 700; margin-top: 2px; }
+.home-date { font-family: var(--mono); font-size: 11px; color: #9DB89C; margin-top: 6px; }
+.home-weather { display: flex; gap: 16px; margin-top: 16px; }
+.weather-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+
+/* ═══════════════ QUICK ACTIONS ═══════════════ */
+.quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.quick-item { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; background: #FFFFFF; border: 1px solid rgba(46,125,50,.10); border-radius: var(--r); transition: .15s; box-shadow: 0 1px 6px rgba(46,125,50,.05); }
+.quick-item:active { background: #F2F8F2; transform: scale(.97); }
+.quick-icon { font-size: 24px; }
+.quick-label { font-size: 11px; color: #5A7A5A; text-align: center; line-height: 1.3; }
+
+/* ═══════════════ TASK STATUS CIRCLE ═══════════════ */
+.status-circle { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+.sc-green { background: var(--green); }
+.sc-amber { background: var(--amber); }
+.sc-red   { background: var(--red); }
+.sc-blue  { background: var(--blue); }
+
+/* responsive tweaks */
+@media (max-width: 360px) { .stat-val { font-size: 18px; } }
+
+/* ═══════════════ WALLET ═══════════════ */
+:root {
+  --orange:     #FF6F00;
+  --orange-l:   #FF8F00;
+  --orange-dim: rgba(255,111,0,.09);
+  --orange-bg:  rgba(255,111,0,.06);
+}
+/* Balance hero */
+.wallet-hero {
+  background: linear-gradient(145deg, #1B5E20 0%, #2E7D32 55%, #388E3C 100%);
+  padding: 28px 20px 32px; position: relative; overflow: hidden;
+}
+.wallet-hero::after {
+  content:''; position:absolute; bottom:-40px; right:-40px;
+  width:180px; height:180px; border-radius:50%;
+  background: rgba(255,255,255,.05);
+}
+.wallet-hero::before {
+  content:''; position:absolute; top:-30px; left:-20px;
+  width:120px; height:120px; border-radius:50%;
+  background: rgba(255,255,255,.04);
+}
+.wallet-balance-label { font-size:12px; color:rgba(255,255,255,.7); letter-spacing:.06em; }
+.wallet-balance-amt {
+  font-family: var(--mono); font-size: 40px; font-weight: 600; color: #FFFFFF;
+  margin: 6px 0 20px; text-shadow: 0 2px 12px rgba(0,0,0,.15); position:relative;z-index:1;
+}
+/* Orange action button */
+.btn-orange {
+  background: linear-gradient(135deg, #FF6F00, #FF8F00);
+  color: #FFFFFF; box-shadow: 0 4px 18px rgba(255,111,0,.4);
+  border: none;
+}
+.btn-orange:active { background: #E65100; }
+/* Transaction item */
+.tx-item {
+  display: flex; align-items: center; gap: 12px; padding: 13px 16px;
+  border-bottom: 1px solid rgba(46,125,50,.07);
+}
+.tx-item:last-child { border-bottom: none; }
+.tx-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.tx-amt-pos { font-family:var(--mono); font-size:16px; font-weight:600; color:#2E7D32; }
+.tx-amt-neg { font-family:var(--mono); font-size:16px; font-weight:600; color:#1B2E1B; }
+/* Account card */
+.acct-card {
+  background: #FFFFFF; border: 1px solid rgba(46,125,50,.10); border-radius: 14px;
+  padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px; box-shadow: 0 2px 10px rgba(46,125,50,.05);
+}
+.acct-card-icon {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+/* Account type selector */
+.acct-type-card {
+  background: #FFFFFF; border: 2px solid rgba(46,125,50,.12); border-radius: 14px;
+  padding: 16px 12px; text-align: center; cursor: pointer; transition: .15s;
+}
+.acct-type-card.selected { border-color: #FF6F00; background: rgba(255,111,0,.04); }
+.acct-type-card:active { background: #F7FAF7; }
+.acct-type-icon { font-size: 28px; margin-bottom: 6px; }
+.acct-type-label { font-size: 12px; font-weight: 500; color: #1B2E1B; }
+/* Withdrawal amount input */
+.withdraw-input {
+  font-family: var(--mono); font-size: 32px; font-weight: 600; color: #1B2E1B;
+  border: none; outline: none; width: 100%; background: none; padding: 0;
+}
+.withdraw-input::placeholder { color: #C8E6C9; }
+/* Step indicator */
+.step-bar { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
+.step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+.step-dot.active { background: #FF6F00; color: #FFFFFF; }
+.step-dot.done { background: #2E7D32; color: #FFFFFF; }
+.step-dot.pending { background: #EEF6EE; color: #9DB89C; border: 1.5px solid rgba(46,125,50,.15); }
+.step-line { flex: 1; height: 2px; }
+.step-line.done { background: #2E7D32; }
+.step-line.pending { background: rgba(46,125,50,.15); }
+/* Success screen */
+.success-screen { display:flex; flex-direction:column; align-items:center; padding: 48px 24px; text-align:center; }
+.success-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(46,125,50,.10); display:flex; align-items:center; justify-content:center; font-size:36px; margin-bottom:20px; }
+
+.fl-type-btn {
+  display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px;
+  border-radius: 20px; font-size: 12px; font-weight: 500; border: 1.5px solid rgba(46,125,50,.18);
+  background: #FFFFFF; color: #5A7A5A; cursor: pointer; white-space: nowrap; transition: .15s;
+  font-family: var(--sans);
+}
+.fl-type-btn.active { background: #2E7D32; color: #FFFFFF; border-color: #2E7D32; }
+.fl-type-btn:active { opacity: .8; }
+
+/* ═══════════════ FARMLOG CARDS ═══════════════ */
+.fl-card {
+  background: #FFFFFF; border: 1px solid rgba(46,125,50,.10); border-radius: 14px;
+  margin-bottom: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(46,125,50,.05);
+  cursor: pointer; transition: .15s;
+}
+.fl-card:active { background: #F7FAF7; }
+.fl-card-hd {
+  padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid rgba(46,125,50,.07);
+}
+.fl-type-tag {
+  padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 500;
+}
+.fl-card-body { padding: 12px 14px; }
+
+/* ═══════════════ FARMLOG DETAIL SECTIONS ═══════════════ */
+.fl-section { background: #FFFFFF; border-radius: 14px; margin: 0 0 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(46,125,50,.05); }
+.fl-section-title {
+  padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: .05em;
+  text-transform: uppercase; color: #5A7A5A; background: #F7FAF7;
+  border-bottom: 1px solid rgba(46,125,50,.08);
+}
+.fl-section-body { padding: 14px 16px; }
+.fl-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+.fl-row:last-child { margin-bottom: 0; }
+.fl-row-label { font-size: 12px; color: #9DB89C; width: 64px; flex-shrink: 0; margin-top: 1px; }
+.fl-row-val { font-size: 13px; color: #1B2E1B; flex: 1; line-height: 1.5; }
+
+/* ═══════════════ OBSERVATION CARD ═══════════════ */
+.obs-card {
+  background: #F7FAF7; border: 1px solid rgba(46,125,50,.12); border-radius: 10px;
+  padding: 12px; position: relative; margin-bottom: 10px;
+}
+.obs-card-del {
+  position: absolute; top: 8px; right: 8px; width: 24px; height: 24px;
+  border-radius: 50%; background: rgba(198,40,40,.1); color: #C62828;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer;
+}
+.obs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.obs-field { display: flex; flex-direction: column; gap: 3px; }
+.obs-field label { font-size: 10px; color: #9DB89C; }
+.obs-field input {
+  background: #FFFFFF; border: 1px solid rgba(46,125,50,.2); border-radius: 8px;
+  padding: 7px 10px; font-size: 13px; color: #1B2E1B; width: 100%; font-family: var(--sans);
+}
+.obs-field input:focus { outline: none; border-color: #2E7D32; }
+.obs-field select {
+  background: #FFFFFF; border: 1px solid rgba(46,125,50,.2); border-radius: 8px;
+  padding: 7px 10px; font-size: 13px; color: #1B2E1B; width: 100%; font-family: var(--sans);
+}
+
+/* ═══════════════ PHOTO UPLOAD AREA ═══════════════ */
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.photo-slot {
+  aspect-ratio: 1; border: 2px dashed rgba(46,125,50,.25); border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #F7FAF7; cursor: pointer; color: #9DB89C; font-size: 12px; gap: 4px;
+  transition: .15s;
+}
+.photo-slot:active { background: #EEF6EE; }
+.photo-slot span { font-size: 24px; }
+
+/* ═══════════════ ADD ROW BUTTON ═══════════════ */
+.add-row-btn {
+  width: 100%; padding: 10px; border: 1.5px dashed rgba(46,125,50,.3);
+  border-radius: 10px; color: #2E7D32; font-size: 13px; font-weight: 500;
+  background: rgba(46,125,50,.04); cursor: pointer; font-family: var(--sans);
+  transition: .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.add-row-btn:active { background: rgba(46,125,50,.10); }
+
+/* Photo scroll in detail */
+.photo-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.photo-scroll::-webkit-scrollbar { display: none; }
+.photo-thumb {
+  width: 90px; height: 90px; border-radius: 10px; background: #EEF6EE;
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 28px; cursor: pointer; border: 1px solid rgba(46,125,50,.12);
+}
+
+/* Severity radio */
+.severity-group { display: flex; gap: 8px; }
+.sev-btn {
+  flex: 1; padding: 8px; border: 1.5px solid rgba(46,125,50,.2); border-radius: 8px;
+  text-align: center; font-size: 13px; cursor: pointer; background: #FFFFFF;
+  font-family: var(--sans); transition: .15s;
+}
+.sev-btn.active-light  { background: rgba(46,125,50,.08); border-color: #43A047; color: #2E7D32; }
+.sev-btn.active-medium { background: rgba(230,81,0,.08); border-color: #E65100; color: #E65100; }
+.sev-btn.active-heavy  { background: rgba(198,40,40,.08); border-color: #C62828; color: #C62828; }
+
+/* Field validation error */
+.field-err { border-color: #C62828 !important; }
+.field-err-msg { font-size: 11px; color: #C62828; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════════════════════════════════════
+     PAGE: LOGIN
+════════════════════════════════════════ -->
+<div class="page" id="page-login">
+  <div class="login-bg"></div>
+  <div class="login-art">
+    <div>
+      <div class="login-logo" style="text-align:center;font-size:72px">🌾</div>
+      <div class="login-brand">
+        <div class="login-brand-name" style="letter-spacing:.12em;color:#2E7D32">智农云</div>
+        <div class="login-brand-sub">Smart Agriculture Platform</div>
+      </div>
+    </div>
+  </div>
+  <div class="login-form">
+    <div class="login-tab" id="login-tab">
+      <button class="active" onclick="switchLoginTab('login')">登录</button>
+      <button onclick="switchLoginTab('register')">注册</button>
+    </div>
+    <div id="login-fields" style="display:flex;flex-direction:column;gap:12px">
+      <div class="field">
+        <span>📱</span>
+        <input type="tel" id="login-phone" placeholder="手机号" maxlength="11" value="13800138000">
+      </div>
+      <div class="field">
+        <span>🔒</span>
+        <input type="password" id="login-pass" placeholder="密码" value="123456">
+      </div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px;height:48px;font-size:16px;border-radius:var(--r)" onclick="doLogin()">登 录</button>
+      <div style="text-align:center;font-size:12px;color:#9DB89C;margin-top:4px">演示账号已填入，直接点击登录</div>
+    </div>
+    <div id="register-fields" style="display:none;flex-direction:column;gap:12px">
+      <div class="field"><span>📱</span><input type="tel" placeholder="手机号" maxlength="11"></div>
+      <div class="field"><span>💬</span><input type="text" placeholder="验证码" maxlength="6"><button style="color:#2E7D32;font-size:13px;white-space:nowrap" onclick="toast('验证码已发送')">获取验证码</button></div>
+      <div class="field"><span>🏢</span><input type="text" placeholder="姓名/企业名称"></div>
+      <div class="field"><span>🔒</span><input type="password" placeholder="设置密码"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:8px;height:48px;font-size:16px;border-radius:var(--r)" onclick="toast('注册功能演示中')">注 册</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: HOME
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-home">
+  <div class="page-body">
+    <div class="home-hero">
+      <div class="home-greeting">早上好</div>
+      <div class="home-name" id="home-username">王大明</div>
+      <div class="home-date" id="home-date">--</div>
+      <div class="home-weather">
+        <div class="weather-item">☀️ <span>晴, 26°C</span></div>
+        <div class="weather-item">💨 <span>微风 3m/s</span></div>
+        <div class="weather-item">💧 <span>湿度 68%</span></div>
+      </div>
+    </div>
+
+    <!-- 快捷入口 -->
+    <div class="sec">
+      <div class="sec-hd"><span class="sec-title">快捷入口</span></div>
+      <div class="quick-grid">
+        <div class="quick-item" onclick="nav('fields')">
+          <span class="quick-icon">🗺️</span><span class="quick-label">地块管理</span>
+        </div>
+        <div class="quick-item" onclick="nav('drone')">
+          <span class="quick-icon">🚁</span><span class="quick-label">无人机任务</span>
+        </div>
+        <div class="quick-item" onclick="nav('ndvi')">
+          <span class="quick-icon">🌿</span><span class="quick-label">NDVI分析</span>
+        </div>
+        <div class="quick-item" onclick="nav('alerts')">
+          <span class="quick-icon">🔔</span>
+          <span class="quick-label" style="position:relative">预警消息<span style="position:absolute;top:-4px;right:-6px;background:var(--red);color:#FFFFFF;font-size:9px;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center">3</span></span>
+        </div>
+        <div class="quick-item" onclick="showIrrigation()">
+          <span class="quick-icon">💧</span><span class="quick-label">灌溉控制</span>
+        </div>
+        <div class="quick-item" onclick="nav('farmlog')">
+          <span class="quick-icon">📋</span><span class="quick-label">农事记录</span>
+        </div>
+        <div class="quick-item" onclick="toast('员工管理功能')">
+          <span class="quick-icon">👥</span><span class="quick-label">员工管理</span>
+        </div>
+        <div class="quick-item" onclick="toast('数据报告功能')">
+          <span class="quick-icon">📊</span><span class="quick-label">数据报告</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 总览数据 -->
+    <div class="sec">
+      <div class="sec-hd"><span class="sec-title">农场概览</span></div>
+      <div class="stat-grid">
+        <div class="stat-box fade-up">
+          <div class="stat-val" style="color:#2E7D32" id="stat-area">--</div>
+          <div class="stat-label">管理总面积（亩）</div>
+          <div class="stat-trend" style="color:#2E7D32">↑ 12% 同比增长</div>
+        </div>
+        <div class="stat-box fade-up">
+          <div class="stat-val" style="color:#1565C0" id="stat-fields">--</div>
+          <div class="stat-label">地块数量</div>
+          <div class="stat-trend" style="color:#5A7A5A">活跃 6 块</div>
+        </div>
+        <div class="stat-box fade-up">
+          <div class="stat-val" style="color:#E65100;cursor:pointer" id="stat-flights" onclick="nav('farmlog')">--</div>
+          <div class="stat-label">农事记录（条）</div>
+          <div class="stat-trend" style="color:#5A7A5A">点击查看</div>
+          <div class="stat-trend" style="color:#E65100">↑ 5 次</div>
+        </div>
+        <div class="stat-box fade-up">
+          <div class="stat-val" style="color:#C62828" id="stat-alerts">--</div>
+          <div class="stat-label">待处理预警</div>
+          <div class="stat-trend" style="color:#C62828">● 需立即处理</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 最近农事记录 -->
+    <div class="sec">
+      <div class="sec-hd">
+        <span class="sec-title">最近农事记录</span>
+        <span class="sec-more" onclick="nav('farmlog')">查看全部 ›</span>
+      </div>
+      <div id="recent-farmlogs"></div>
+    </div>
+
+    <!-- 最近任务 -->
+    <div class="sec">
+      <div class="sec-hd">
+        <span class="sec-title">最近飞行任务</span>
+        <span class="sec-more" onclick="nav('drone')">查看全部 ›</span>
+      </div>
+      <div class="card" id="recent-tasks"></div>
+    </div>
+
+    <!-- 最新预警 -->
+    <div class="sec">
+      <div class="sec-hd">
+        <span class="sec-title">最新预警</span>
+        <span class="sec-more" onclick="nav('alerts')">查看全部 ›</span>
+      </div>
+      <div id="recent-alerts"></div>
+    </div>
+
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: FIELDS
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-fields">
+  <div class="hdr">
+    <div class="hdr-title">地块管理</div>
+    <button class="hdr-action" onclick="showAddField()">➕</button>
+  </div>
+  <div class="page-body">
+    <!-- 地图区域 -->
+    <div style="padding:12px 16px 0">
+      <div class="map-box" style="height:200px" id="field-map">
+        <svg width="100%" height="100%" viewBox="0 0 340 200">
+          <!-- 模拟卫星地图地块 -->
+          <polygon points="30,40 120,25 180,60 160,110 60,120" fill="rgba(46,125,50,.12)" stroke="#2E7D32" stroke-width="1.5"/>
+          <polygon points="190,30 280,20 310,70 270,90 195,75" fill="rgba(21,101,192,.10)" stroke="#1565C0" stroke-width="1.5"/>
+          <polygon points="80,135 180,125 200,175 90,180" fill="rgba(230,81,0,.10)" stroke="#E65100" stroke-width="1.5"/>
+          <polygon points="215,100 290,95 305,155 220,160" fill="rgba(51,105,30,.10)" stroke="#33691E" stroke-width="1.5"/>
+          <!-- 地块标签 -->
+          <text x="90" y="80" fill="#1B5E20" font-size="10" font-family="Noto Sans SC">A区 · 小麦</text>
+          <text x="230" y="58" fill="#1565C0" font-size="10" font-family="Noto Sans SC">B区 · 水稻</text>
+          <text x="120" y="160" fill="#E65100" font-size="10" font-family="Noto Sans SC">C区 · 玉米</text>
+          <text x="235" y="135" fill="#33691E" font-size="10" font-family="Noto Sans SC">D区 · 大豆</text>
+          <!-- 比例尺 -->
+          <line x1="15" y1="185" x2="65" y2="185" stroke="#C8E6C9" stroke-width="1"/>
+          <text x="25" y="193" fill="#9DB89C" font-size="9">200m</text>
+        </svg>
+        <div style="position:absolute;bottom:8px;right:8px;display:flex;gap:6px">
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="toast('卫星图切换')">卫星图</button>
+          <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="toast('全屏查看')">⛶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 地块列表 -->
+    <div class="sec" style="margin-top:16px">
+      <div class="sec-hd"><span class="sec-title">地块列表</span><span style="font-size:12px;color:#5A7A5A" id="field-count">共 0 块</span></div>
+      <div class="card" id="field-list"></div>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: DRONE
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-drone">
+  <div class="hdr">
+    <div class="hdr-title">M3M 无人机任务</div>
+    <button class="hdr-action" style="font-size:20px" onclick="showCreateTask()">➕</button>
+  </div>
+  <div class="page-body">
+
+    <!-- 设备状态卡 -->
+    <div style="padding:12px 16px 0">
+      <div class="card card-p" id="drone-status-card">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:40px">🚁</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:600">Mavic 3 Multispectral</div>
+            <div style="font-size:12px;color:#5A7A5A;margin-top:2px;font-family:var(--mono)">SN: DJI-M3M-A8F2C1</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <span class="badge badge-green" id="drone-conn-badge">● 已连接</span>
+              <span class="badge badge-blue">MSDK 5</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:var(--mono);font-size:24px;font-weight:500;color:#2E7D32" id="drone-batt">82%</div>
+            <div style="font-size:11px;color:#5A7A5A">电量</div>
+          </div>
+        </div>
+        <!-- 实时遥测 -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(46,125,50,.09)">
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:15px;color:#1565C0" id="tele-alt">--</div>
+            <div style="font-size:10px;color:#9DB89C">高度(m)</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:15px;color:#E65100" id="tele-spd">--</div>
+            <div style="font-size:10px;color:#9DB89C">速度(m/s)</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:var(--mono);font-size:15px;color:#2E7D32" id="tele-dist">--</div>
+            <div style="font-size:10px;color:#9DB89C">距离(m)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务筛选 -->
+    <div style="padding:14px 16px 0;display:flex;gap:8px;overflow-x:auto">
+      <div class="chip active" id="chip-all" onclick="filterTasks('all',this)">全部</div>
+      <div class="chip" id="chip-flying" onclick="filterTasks('flying',this)">飞行中</div>
+      <div class="chip" id="chip-pending" onclick="filterTasks('pending',this)">待执行</div>
+      <div class="chip" id="chip-done" onclick="filterTasks('done',this)">已完成</div>
+    </div>
+
+    <!-- 任务列表 -->
+    <div class="sec">
+      <div class="card" id="task-list"></div>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: LIVE TRACKING
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-tracking">
+  <div class="hdr">
+    <button class="hdr-back" onclick="back()">‹</button>
+    <div class="hdr-title" id="tracking-title">实时轨迹</div>
+    <div class="hdr-action"></div>
+  </div>
+  <div class="page-body" style="padding-bottom:20px">
+    <div style="padding:12px 16px 0">
+      <!-- 实时轨迹地图 -->
+      <div class="drone-track" id="tracking-map">
+        <svg class="drone-path" viewBox="0 0 320 240" id="track-svg"></svg>
+        <div class="drone-icon" id="drone-icon">🚁</div>
+        <div style="position:absolute;top:10px;left:10px;background:rgba(255,255,255,.92);border:1px solid rgba(46,125,50,.14);border-radius:8px;padding:6px 10px">
+          <div style="font-size:10px;color:#5A7A5A">实时位置</div>
+          <div style="font-family:var(--mono);font-size:10px;color:#2E7D32" id="track-pos">120.4523°E  30.7821°N</div>
+        </div>
+        <div style="position:absolute;bottom:10px;right:10px;display:flex;gap:6px">
+          <div class="badge badge-green"><span class="pulse" style="width:6px;height:6px"></span> 直播中</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 实时数据 -->
+    <div style="padding:12px 16px 0">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px" id="telemetry-grid">
+        <div class="stat-box">
+          <div style="font-size:10px;color:#5A7A5A;margin-bottom:6px">📍 飞行高度</div>
+          <div class="stat-val" style="color:#1565C0" id="rt-alt">90.0 m</div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:10px;color:#5A7A5A;margin-bottom:6px">⚡ 飞行速度</div>
+          <div class="stat-val" style="color:#E65100" id="rt-spd">8.4 m/s</div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:10px;color:#5A7A5A;margin-bottom:6px">🔋 电量剩余</div>
+          <div class="stat-val" id="rt-batt" style="color:#2E7D32">78%</div>
+          <div class="prog-wrap" style="margin-top:8px"><div class="prog-fill" id="rt-batt-bar" style="width:78%"></div></div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:10px;color:#5A7A5A;margin-bottom:6px">📸 已拍张数</div>
+          <div class="stat-val" style="color:#2E7D32" id="rt-photos">0</div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:10px;color:#5A7A5A;margin-bottom:6px">✅ 完成进度</div>
+          <div class="stat-val" id="rt-progress">0%</div>
+          <div class="prog-wrap" style="margin-top:8px"><div class="prog-fill" id="rt-prog-bar" style="width:0%"></div></div>
+        </div>
+        <div class="stat-box">
+          <div style="font-size:10px;color:#5A7A5A;margin-bottom:6px">⏱ 飞行时长</div>
+          <div class="stat-val" style="color:#5A7A5A;font-family:var(--mono);font-size:18px" id="rt-time">00:00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 多光谱数据实时预览 -->
+    <div class="sec">
+      <div class="sec-hd"><span class="sec-title">多光谱实时数据</span></div>
+      <div class="card card-p">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div style="text-align:center">
+            <div style="width:36px;height:36px;background:rgba(0,255,148,.25);border-radius:8px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:18px">🟩</div>
+            <div style="font-family:var(--mono);font-size:13px;color:#00FF94" id="ms-g">0.72</div>
+            <div style="font-size:10px;color:#9DB89C">Green</div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:36px;height:36px;background:rgba(198,40,40,.10);border-radius:8px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:18px">🟥</div>
+            <div style="font-family:var(--mono);font-size:13px;color:#C62828" id="ms-r">0.38</div>
+            <div style="font-size:10px;color:#9DB89C">Red</div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:36px;height:36px;background:rgba(230,81,0,.10);border-radius:8px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:18px">🟧</div>
+            <div style="font-family:var(--mono);font-size:13px;color:#E65100" id="ms-re">0.55</div>
+            <div style="font-size:10px;color:#9DB89C">Red Edge</div>
+          </div>
+          <div style="text-align:center">
+            <div style="width:36px;height:36px;background:rgba(21,101,192,.10);border-radius:8px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:18px">🟦</div>
+            <div style="font-family:var(--mono);font-size:13px;color:#1565C0" id="ms-nir">0.84</div>
+            <div style="font-size:10px;color:#9DB89C">NIR</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(46,125,50,.09)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:#5A7A5A">实时 NDVI</span>
+            <span class="badge badge-green" id="rt-ndvi-badge">健康</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="ndvi-bar" style="flex:1;position:relative">
+              <div class="ndvi-pointer" id="ndvi-pointer" style="left:60%"></div>
+            </div>
+            <div style="font-family:var(--mono);font-size:18px;font-weight:500;color:#2E7D32" id="rt-ndvi">0.61</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:#9DB89C">
+            <span>-1 (裸土)</span><span>0</span><span>+1 (茂盛)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务控制 -->
+    <div class="sec">
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-danger" style="flex:1;height:48px" onclick="pauseTask()">⏸ 暂停</button>
+        <button class="btn btn-ghost" style="flex:1;height:48px" onclick="returnHome()">🏠 返航</button>
+        <button class="btn btn-primary" style="flex:1;height:48px;background:var(--red);color:#FFFFFF" onclick="emergencyStop()">🚨 紧急停</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: NDVI
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-ndvi">
+  <div class="hdr">
+    <div class="hdr-title">NDVI 植被分析</div>
+    <button class="hdr-action" onclick="toast('导出报告')">📤</button>
+  </div>
+  <div class="page-body">
+    <!-- 地块选择 -->
+    <div style="padding:12px 16px 0;display:flex;gap:8px;overflow-x:auto">
+      <div class="chip active" onclick="selectNdviField('A',this)">A区 · 小麦</div>
+      <div class="chip" onclick="selectNdviField('B',this)">B区 · 水稻</div>
+      <div class="chip" onclick="selectNdviField('C',this)">C区 · 玉米</div>
+      <div class="chip" onclick="selectNdviField('D',this)">D区 · 大豆</div>
+    </div>
+
+    <!-- NDVI 地图 -->
+    <div style="padding:12px 16px 0">
+      <div class="map-box" style="height:200px">
+        <svg width="100%" height="100%" viewBox="0 0 340 200" id="ndvi-map-svg">
+          <!-- NDVI伪彩色地图 -->
+          <defs>
+            <radialGradient id="ng1" cx="40%" cy="45%"><stop offset="0%" stop-color="#2E7D32" stop-opacity=".8"/><stop offset="60%" stop-color="#66BB6A" stop-opacity=".6"/><stop offset="100%" stop-color="#F9A825" stop-opacity=".3"/></radialGradient>
+            <radialGradient id="ng2" cx="60%" cy="50%"><stop offset="0%" stop-color="#43A047" stop-opacity=".8"/><stop offset="80%" stop-color="#AED581" stop-opacity=".4"/></radialGradient>
+            <radialGradient id="ng3" cx="30%" cy="60%"><stop offset="0%" stop-color="#C62828" stop-opacity=".7"/><stop offset="70%" stop-color="#F9A825" stop-opacity=".5"/></radialGradient>
+          </defs>
+          <polygon points="20,20 160,10 200,90 170,140 30,135" fill="url(#ng1)"/>
+          <ellipse cx="130" cy="70" rx="50" ry="40" fill="url(#ng2)" opacity=".6"/>
+          <ellipse cx="80" cy="100" rx="30" ry="25" fill="url(#ng3)" opacity=".6"/>
+          <!-- 色阶图例 -->
+          <rect x="230" y="150" width="100" height="12" rx="3" fill="url(#ndvi-legend-grad)"/>
+          <defs><linearGradient id="ndvi-legend-grad"><stop offset="0%" stop-color="#C62828"/><stop offset="25%" stop-color="#E65100"/><stop offset="50%" stop-color="#F9A825"/><stop offset="75%" stop-color="#66BB6A"/><stop offset="100%" stop-color="#2E7D32"/></linearGradient></defs>
+          <text x="228" y="175" fill="#9DB89C" font-size="8">-1</text>
+          <text x="326" y="175" fill="#9DB89C" font-size="8">+1</text>
+          <text x="265" y="145" fill="#1B2E1B" font-size="9">NDVI</text>
+        </svg>
+        <div style="position:absolute;top:8px;right:8px">
+          <span class="badge badge-green" style="font-size:10px">2024-01-15 采集</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NDVI 汇总 -->
+    <div class="sec">
+      <div class="card card-p" id="ndvi-summary">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+          <div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:500;color:#2E7D32" id="ndvi-avg">0.68</div>
+            <div style="font-size:11px;color:#5A7A5A;margin-top:3px">平均 NDVI</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:500;color:#43A047" id="ndvi-max">0.89</div>
+            <div style="font-size:11px;color:#5A7A5A;margin-top:3px">最高值</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:500;color:#E65100" id="ndvi-min">0.21</div>
+            <div style="font-size:11px;color:#5A7A5A;margin-top:3px">最低值</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(46,125,50,.09)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:12px;color:#5A7A5A">健康状况分布</span>
+          </div>
+          <div id="health-bars"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 波段数据 -->
+    <div class="sec">
+      <div class="sec-hd"><span class="sec-title">多光谱波段反射率</span></div>
+      <div class="card card-p">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0" id="band-bars"></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(46,125,50,.09);font-size:12px;color:#5A7A5A;line-height:1.8" id="ndvi-insight"></div>
+      </div>
+    </div>
+
+    <!-- 历史趋势 -->
+    <div class="sec">
+      <div class="sec-hd"><span class="sec-title">NDVI 历史趋势</span></div>
+      <div class="card card-p">
+        <svg width="100%" height="120" viewBox="0 0 300 120" id="ndvi-trend-svg">
+          <defs><linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2E7D32" stop-opacity=".15"/><stop offset="100%" stop-color="#2E7D32" stop-opacity="0"/></linearGradient></defs>
+          <polygon points="0,95 50,85 100,70 150,60 200,45 250,55 300,40 300,120 0,120" fill="url(#trendFill)"/>
+          <polyline points="0,95 50,85 100,70 150,60 200,45 250,55 300,40" fill="none" stroke="rgba(46,125,50,.2)" stroke-width="1.5"/>
+          <polyline points="0,95 50,85 100,70 150,60 200,45 250,55 300,40" fill="none" stroke="#2E7D32" stroke-width="2"/>
+          <circle cx="0"   cy="95" r="3" fill="#2E7D32"/>
+          <circle cx="50"  cy="85" r="3" fill="#2E7D32"/>
+          <circle cx="100" cy="70" r="3" fill="#2E7D32"/>
+          <circle cx="150" cy="60" r="3" fill="#2E7D32"/>
+          <circle cx="200" cy="45" r="3" fill="#2E7D32"/>
+          <circle cx="250" cy="55" r="3" fill="#E65100"/>
+          <circle cx="300" cy="40" r="5" fill="#43A047" stroke="#FFFFFF" stroke-width="2"/>
+          <line x1="0" y1="80" x2="300" y2="80" stroke="rgba(46,125,50,.15)" stroke-width="1" stroke-dasharray="4 4"/>
+          <text x="4" y="78" fill="#9DB89C" font-size="8">0.5</text>
+          <text x="0"   y="115" fill="#9DB89C" font-size="8">10月</text>
+          <text x="60"  y="115" fill="#9DB89C" font-size="8">11月</text>
+          <text x="120" y="115" fill="#9DB89C" font-size="8">12月</text>
+          <text x="180" y="115" fill="#9DB89C" font-size="8">1月</text>
+          <text x="265" y="115" fill="#9DB89C" font-size="8">当前</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 处方图 -->
+    <div class="sec">
+      <div class="sec-hd"><span class="sec-title">智能处方图建议</span></div>
+      <div class="card card-p" style="display:flex;flex-direction:column;gap:10px" id="prescription"></div>
+    </div>
+
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: ALERTS
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-alerts">
+  <div class="hdr">
+    <div class="hdr-title">消息 · 预警 · 待办</div>
+    <button class="hdr-action" onclick="markAllRead()" style="font-size:12px;color:#2E7D32">全读</button>
+  </div>
+  <div class="page-body">
+    <div style="padding:12px 16px 0;display:flex;gap:8px">
+      <div class="chip active" onclick="switchAlertTab('all',this)">全部</div>
+      <div class="chip" onclick="switchAlertTab('warn',this)">预警</div>
+      <div class="chip" onclick="switchAlertTab('todo',this)">待办</div>
+      <div class="chip" onclick="switchAlertTab('msg',this)">消息</div>
+    </div>
+
+    <div class="sec" id="alert-list"></div>
+
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: PROFILE
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-profile">
+  <div class="page-body">
+    <div style="padding:32px 20px 20px;background:linear-gradient(150deg,#E8F5E9 0%,#F1F8E9 100%);border-bottom:1px solid rgba(46,125,50,.12)">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#2E7D32,#66BB6A);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 4px 16px rgba(46,125,50,.25)">👨‍🌾</div>
+        <div>
+          <div style="font-size:20px;font-weight:700">王大明</div>
+          <div style="font-size:12px;color:#5A7A5A;margin-top:3px">农户端 · 大总管</div>
+          <div style="font-family:var(--mono);font-size:11px;color:#9DB89C;margin-top:4px">138 0013 8000</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:20px;text-align:center;padding-top:16px;border-top:1px solid rgba(46,125,50,.09)">
+        <div><div style="font-family:var(--mono);font-size:18px;font-weight:500;color:#2E7D32">1280</div><div style="font-size:11px;color:#5A7A5A">管理面积</div></div>
+        <div style="border-left:1px solid rgba(46,125,50,.09);border-right:1px solid rgba(46,125,50,.09)"><div style="font-family:var(--mono);font-size:18px;font-weight:500;color:#1565C0">8</div><div style="font-size:11px;color:#5A7A5A">地块数</div></div>
+        <div><div style="font-family:var(--mono);font-size:18px;font-weight:500;color:#E65100">24</div><div style="font-size:11px;color:#5A7A5A">飞行架次</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="card">
+        <div class="list-row" onclick="navWallet()"><div class="list-icon" style="background:rgba(255,111,0,.10)">💰</div><div class="list-body"><div class="list-title">我的钱包</div><div class="list-sub" id="profile-balance">余额 ¥5,800.00</div></div><span style="color:#9DB89C">›</span></div>
+        <div class="list-row" onclick="toast('账户信息')"><div class="list-icon" style="background:var(--green-dim)">👤</div><div class="list-body"><div class="list-title">账户信息</div><div class="list-sub">查看和修改个人资料</div></div><span style="color:#9DB89C">›</span></div>
+        <div class="list-row" onclick="toast('认证管理')"><div class="list-icon" style="background:var(--blue-dim)">📋</div><div class="list-body"><div class="list-title">实名认证</div><div class="list-sub">已通过认证</div></div><span class="badge badge-green" style="font-size:11px">✓</span></div>
+        <div class="list-row" onclick="toast('M3M设备')"><div class="list-icon" style="background:var(--amber-dim)">🚁</div><div class="list-body"><div class="list-title">我的设备</div><div class="list-sub">M3M · 在线 1 台</div></div><span style="color:#9DB89C">›</span></div>
+        <div class="list-row" onclick="toast('消息设置')"><div class="list-icon" style="background:var(--card2)">🔔</div><div class="list-body"><div class="list-title">消息通知</div><div class="list-sub">推送、短信提醒</div></div><span style="color:#9DB89C">›</span></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="card">
+        <div class="list-row" onclick="toast('帮助文档')"><div class="list-icon" style="background:var(--card2)">📖</div><div class="list-body"><div class="list-title">帮助与支持</div><div class="list-sub">操作手册、常见问题</div></div><span style="color:#9DB89C">›</span></div>
+        <div class="list-row" onclick="toast('关于平台')"><div class="list-icon" style="background:var(--card2)">ℹ️</div><div class="list-body"><div class="list-title">关于智农云</div><div class="list-sub">版本 v1.0.0</div></div><span style="color:#9DB89C">›</span></div>
+        <div class="list-row" onclick="doLogout()" style="cursor:pointer"><div class="list-icon" style="background:var(--red-dim)">🚪</div><div class="list-body"><div class="list-title" style="color:#C62828">退出登录</div></div></div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: WALLET HOME  5.3.1.1
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-wallet">
+  <div class="hdr" style="background:#2E7D32;border-bottom:none">
+    <button class="hdr-back" onclick="back()" style="color:#FFFFFF;background:rgba(255,255,255,.15)">‹</button>
+    <div class="hdr-title" style="color:#FFFFFF">我的钱包</div>
+    <div class="hdr-action"></div>
+  </div>
+  <div class="page-body" style="padding-bottom:24px">
+    <!-- 余额卡片 -->
+    <div class="wallet-hero">
+      <div class="wallet-balance-label">账户总余额（元）</div>
+      <div class="wallet-balance-amt" id="wallet-balance-amt">5,800.00</div>
+      <button class="btn btn-orange" style="height:42px;padding:0 32px;border-radius:10px;font-size:15px;font-weight:600" onclick="navPage('withdraw')">提 现</button>
+    </div>
+
+    <!-- 收支明细 -->
+    <div style="padding:0 16px;margin-top:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:13px;font-weight:600;color:#1B2E1B">收支明细</span>
+        <span style="font-size:12px;color:#FF6F00;cursor:pointer" onclick="navPage('tx-list')">查看全部 ›</span>
+      </div>
+      <div class="card" id="wallet-tx-preview"></div>
+    </div>
+
+    <!-- 我的收款账户 -->
+    <div style="padding:0 16px;margin-top:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:13px;font-weight:600;color:#1B2E1B">我的收款账户</span>
+        <button class="btn btn-orange" style="height:32px;padding:0 14px;font-size:12px;border-radius:8px" onclick="navPage('add-account')">＋ 添加账户</button>
+      </div>
+      <div id="wallet-acct-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: ADD ACCOUNT  5.3.1.2
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-add-account">
+  <div class="hdr" style="background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.10)">
+    <button class="hdr-back" onclick="back()">‹</button>
+    <div class="hdr-title" id="add-acct-title">添加收款账户</div>
+    <div class="hdr-action"></div>
+  </div>
+  <div class="page-body" style="padding-bottom:24px">
+    <div style="padding:20px 16px 0">
+      <!-- 步骤条 -->
+      <div class="step-bar" id="add-acct-steps">
+        <div class="step-dot active" id="step1-dot">1</div>
+        <div class="step-line pending" id="step-line"></div>
+        <div class="step-dot pending" id="step2-dot">2</div>
+      </div>
+
+      <!-- Step 1: 选类型 -->
+      <div id="add-acct-step1">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:#1B2E1B">选择账户类型</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="acct-type-grid">
+          <div class="acct-type-card" onclick="selectAcctType('corporate',this)">
+            <div class="acct-type-icon">🏢</div>
+            <div class="acct-type-label">对公银行卡</div>
+          </div>
+          <div class="acct-type-card" onclick="selectAcctType('personal',this)">
+            <div class="acct-type-icon">💳</div>
+            <div class="acct-type-label">个人银行卡</div>
+          </div>
+          <div class="acct-type-card" onclick="selectAcctType('wechat',this)">
+            <div class="acct-type-icon">💚</div>
+            <div class="acct-type-label">微信支付</div>
+          </div>
+          <div class="acct-type-card" onclick="selectAcctType('alipay',this)">
+            <div class="acct-type-icon">🔵</div>
+            <div class="acct-type-label">支付宝</div>
+          </div>
+        </div>
+        <button class="btn btn-orange btn-full" style="margin-top:20px;height:48px;border-radius:12px;font-size:15px" onclick="goAddAcctStep2()">下一步</button>
+      </div>
+
+      <!-- Step 2: 填表单 -->
+      <div id="add-acct-step2" style="display:none">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px;color:#1B2E1B" id="add-acct-form-title"></div>
+        <div id="add-acct-form"></div>
+      </div>
+
+      <!-- Step 3: 成功 -->
+      <div id="add-acct-success" style="display:none">
+        <div class="success-screen">
+          <div class="success-circle">✓</div>
+          <div style="font-size:18px;font-weight:700;color:#1B2E1B;margin-bottom:8px" id="add-acct-success-title">绑定成功</div>
+          <div style="font-size:13px;color:#5A7A5A;line-height:1.7;margin-bottom:32px" id="add-acct-success-desc">收款账户已成功绑定，您可以使用该账户进行提现操作。</div>
+          <button class="btn btn-orange btn-full" style="height:48px;border-radius:12px;font-size:15px" onclick="navPage('wallet')">返回钱包首页</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: TRANSACTION LIST  5.3.1.4
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-tx-list">
+  <div class="hdr" style="background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.10)">
+    <button class="hdr-back" onclick="back()">‹</button>
+    <div class="hdr-title">收支明细</div>
+    <div class="hdr-action"></div>
+  </div>
+  <div class="page-body" style="padding-bottom:24px">
+    <!-- Filter tabs -->
+    <div style="padding:10px 16px;background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.07);display:flex;gap:8px">
+      <div class="chip active" id="tx-chip-all"      onclick="filterTx('all',this)">全部</div>
+      <div class="chip"        id="tx-chip-income"   onclick="filterTx('income',this)">收入</div>
+      <div class="chip"        id="tx-chip-withdraw" onclick="filterTx('withdraw',this)">提现</div>
+    </div>
+    <div style="padding:14px 16px 0" id="tx-full-list"></div>
+    <div style="text-align:center;padding:20px;font-size:12px;color:#9DB89C" id="tx-load-more">— 下滑加载更多 —</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: WITHDRAW  5.3.1.5
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-withdraw">
+  <div class="hdr" style="background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.10)">
+    <button class="hdr-back" onclick="back()">‹</button>
+    <div class="hdr-title">提现</div>
+    <div class="hdr-action"></div>
+  </div>
+  <div class="page-body" style="padding-bottom:100px">
+    <!-- 余额提示 -->
+    <div style="background:linear-gradient(145deg,#E8F5E9,#F1F8E9);padding:18px 20px;margin:14px 16px 0;border-radius:14px;border:1px solid rgba(46,125,50,.12)">
+      <div style="font-size:12px;color:#5A7A5A">可提现余额</div>
+      <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:#1B5E20;margin-top:4px">¥<span id="withdraw-balance">5,800.00</span></div>
+    </div>
+
+    <!-- 提现金额 -->
+    <div style="margin:14px 16px 0;background:#FFFFFF;border-radius:14px;border:1px solid rgba(46,125,50,.10);padding:18px 20px;box-shadow:0 2px 10px rgba(46,125,50,.05)">
+      <div style="font-size:13px;font-weight:600;color:#5A7A5A;margin-bottom:14px">提现金额</div>
+      <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid rgba(46,125,50,.15);padding-bottom:12px">
+        <span style="font-size:24px;color:#9DB89C;font-family:var(--mono)">¥</span>
+        <input class="withdraw-input" type="number" id="withdraw-amt" placeholder="0.00" min="0.01" step="0.01" oninput="validateWithdraw()">
+        <button onclick="fillAllWithdraw()" style="white-space:nowrap;padding:6px 12px;background:var(--orange-dim);color:#FF6F00;border-radius:8px;font-size:12px;font-weight:600;font-family:var(--sans);border:none;cursor:pointer">全部提现</button>
+      </div>
+      <div style="font-size:11px;color:#C62828;margin-top:6px;min-height:16px" id="withdraw-err"></div>
+    </div>
+
+    <!-- 收款方式 -->
+    <div style="margin:12px 16px 0;background:#FFFFFF;border-radius:14px;border:1px solid rgba(46,125,50,.10);padding:18px 20px;box-shadow:0 2px 10px rgba(46,125,50,.05)">
+      <div style="font-size:13px;font-weight:600;color:#5A7A5A;margin-bottom:12px">收款方式</div>
+      <div id="withdraw-acct-list"></div>
+    </div>
+  </div>
+
+  <!-- 底部确认按钮 -->
+  <div style="position:fixed;bottom:0;left:0;right:0;padding:12px 16px 32px;background:#FFFFFF;border-top:1px solid rgba(46,125,50,.10);box-shadow:0 -4px 20px rgba(46,125,50,.08)">
+    <button class="btn btn-orange btn-full" style="height:48px;font-size:16px;font-weight:600;border-radius:12px" onclick="submitWithdraw()">确认提现</button>
+  </div>
+</div>
+
+<!-- Withdraw Success Modal -->
+<div class="modal-overlay" id="modal-withdraw-success">
+  <div class="modal-sheet" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:40px;margin-bottom:12px">🎉</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">提现申请已提交</div>
+    <div style="font-size:13px;color:#5A7A5A;line-height:1.8;margin-bottom:28px">预计 1–3 个工作日到账<br>请留意银行/支付宝/微信到账通知</div>
+    <button class="btn btn-orange btn-full" style="height:48px;border-radius:12px;font-size:15px" onclick="closeModal('modal-withdraw-success');navPage('wallet')">返回钱包</button>
+  </div>
+</div>
+
+<!-- WeChat/Alipay Auth Modal -->
+<div class="modal-overlay" id="modal-auth">
+  <div class="modal-sheet" style="text-align:center">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;margin-bottom:12px" id="auth-icon">💚</div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:8px" id="auth-title">微信授权绑定</div>
+    <div style="font-size:13px;color:#5A7A5A;margin-bottom:24px">即将跳转微信进行授权，授权成功后自动绑定。</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-auth')">取消</button>
+      <button class="btn btn-orange btn-full" style="height:46px;border-radius:12px" onclick="confirmAuth()">确认授权</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     BOTTOM NAV
+════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-item active" id="nav-home" onclick="nav('home')">
+    <span class="nav-icon">🏠</span><span class="nav-label">首页</span>
+  </div>
+  <div class="nav-item" id="nav-fields" onclick="nav('fields')">
+    <span class="nav-icon">🗺️</span><span class="nav-label">地块</span>
+  </div>
+  <div class="nav-item" id="nav-drone" onclick="nav('drone')">
+    <span class="nav-icon">🚁</span><span class="nav-label">无人机</span>
+  </div>
+  <div class="nav-item" id="nav-ndvi" onclick="nav('ndvi')">
+    <span class="nav-icon">🌿</span><span class="nav-label">NDVI</span>
+  </div>
+  <div class="nav-item" id="nav-profile" onclick="nav('profile')" style="position:relative">
+    <span class="nav-icon">👤</span><span class="nav-label">我的</span>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     MODALS
+════════════════════════════════════════ -->
+<!-- Add Field Modal -->
+<div class="modal-overlay" id="modal-field">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:17px;font-weight:600;margin-bottom:20px">新增地块</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="field"><span>🏷️</span><input type="text" id="new-field-name" placeholder="地块名称（如：A区-小麦）"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><input type="number" id="new-field-area" placeholder="面积（亩）"></div>
+        <div class="field">
+          <select id="new-field-crop" style="flex:1;background:none;color:#1B2E1B;font-size:14px">
+            <option value="">作物类型</option>
+            <option>小麦</option><option>水稻</option><option>玉米</option>
+            <option>大豆</option><option>棉花</option><option>油菜</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><span>📍</span><input type="text" id="new-field-loc" placeholder="地块位置描述"></div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost btn-full" onclick="closeModal('modal-field')">取消</button>
+        <button class="btn btn-primary btn-full" onclick="addField()">确认添加</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:17px;font-weight:600;margin-bottom:20px">创建飞行任务</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="field">
+        <span>📋</span>
+        <select id="new-task-field" style="flex:1;background:none;color:#1B2E1B;font-size:14px">
+          <option value="">选择作业地块</option>
+        </select>
+      </div>
+      <div class="field">
+        <span>🎯</span>
+        <select id="new-task-type" style="flex:1;background:none;color:#1B2E1B;font-size:14px">
+          <option>多光谱巡田（NDVI）</option>
+          <option>RGB正射图采集</option>
+          <option>智能病害检测</option>
+          <option>作物计数</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field"><span>✈️</span><input type="number" id="new-task-alt" placeholder="飞行高度(m)" value="90"></div>
+        <div class="field"><span>📸</span><input type="number" id="new-task-overlap" placeholder="重叠率(%)" value="80"></div>
+      </div>
+      <div style="background:rgba(230,81,0,.08);border:1px solid var(--amber);border-radius:var(--r);padding:10px 12px;font-size:12px;color:#E65100">
+        ⚠️ 飞行前请确认电量≥50%、风速＜10m/s，并检查空域许可
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn btn-ghost btn-full" onclick="closeModal('modal-task')">取消</button>
+        <button class="btn btn-primary btn-full" onclick="createTask()">创建任务</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Irrigation Modal -->
+<div class="modal-overlay" id="modal-irrigation">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:17px;font-weight:600;margin-bottom:4px">阀区灌溉控制</div>
+    <div style="font-size:12px;color:#5A7A5A;margin-bottom:20px">实时控制 · MQTT 协议</div>
+    <div style="display:flex;flex-direction:column;gap:10px" id="valve-list"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:16px" onclick="closeModal('modal-irrigation')">关闭</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: FARMLOG LIST
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-farmlog">
+  <div class="hdr" style="background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.10)">
+    <button class="hdr-back" onclick="back()">‹</button>
+    <div class="hdr-title">农事记录</div>
+    <button class="hdr-action" style="color:#2E7D32;font-size:22px;font-weight:300" onclick="navFarmlogAdd()">＋</button>
+  </div>
+  <div class="page-body" style="padding-bottom:24px">
+    <!-- 筛选栏 -->
+    <div style="padding:10px 16px;background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.08);display:flex;gap:8px;overflow-x:auto">
+      <div class="chip active" id="fl-chip-all"    onclick="filterFarmlog('all',this)">全部</div>
+      <div class="chip"        id="fl-chip-diary"  onclick="filterFarmlog('diary',this)">记事</div>
+      <div class="chip"        id="fl-chip-growth" onclick="filterFarmlog('growth',this)">日生长量</div>
+      <div class="chip"        id="fl-chip-pest"   onclick="filterFarmlog('pest',this)">农药</div>
+      <div class="chip"        id="fl-chip-water"  onclick="filterFarmlog('water',this)">水肥</div>
+      <div class="chip"        id="fl-chip-issue"  onclick="filterFarmlog('issue',this)">田间问题</div>
+    </div>
+    <!-- 统计栏 -->
+    <div style="padding:12px 16px;display:flex;gap:10px" id="fl-stats"></div>
+    <!-- 列表 -->
+    <div style="padding:0 16px" id="fl-list"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: FARMLOG DETAIL
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-farmlog-detail">
+  <div class="hdr" style="background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.10)">
+    <button class="hdr-back" onclick="back()">‹</button>
+    <div class="hdr-title">记录详情</div>
+    <div style="display:flex;gap:4px">
+      <button onclick="exportFarmlogDetail()" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px">⬇</button>
+      <button onclick="showFarmlogMenu()" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px;letter-spacing:1px;color:#5A7A5A">⋯</button>
+    </div>
+  </div>
+  <div class="page-body" style="padding-bottom:24px" id="fl-detail-body"></div>
+  <!-- 更多菜单 -->
+  <div id="fl-menu-mask" style="display:none;position:fixed;inset:0;z-index:150" onclick="closeFarmlogMenu()"></div>
+  <div id="fl-menu" style="display:none;position:fixed;top:56px;right:12px;background:#FFFFFF;border:1px solid rgba(46,125,50,.15);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);z-index:160;overflow:hidden;min-width:120px">
+    <div onclick="editFarmlog()" style="padding:14px 18px;font-size:14px;border-bottom:1px solid rgba(46,125,50,.08);cursor:pointer">✏️ 编辑</div>
+    <div onclick="confirmDeleteFarmlog()" style="padding:14px 18px;font-size:14px;color:#C62828;cursor:pointer">🗑️ 删除</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: FARMLOG ADD / EDIT
+════════════════════════════════════════ -->
+<div class="page hidden" id="page-farmlog-add">
+  <div class="hdr" style="background:#2E7D32">
+    <button class="hdr-back" onclick="back()" style="color:#FFFFFF;background:rgba(255,255,255,.15)">‹</button>
+    <div class="hdr-title" style="color:#FFFFFF" id="fl-add-title">添加农事记录</div>
+    <button onclick="saveFarmlogDraft()" style="font-size:13px;color:rgba(255,255,255,.85);padding:4px 8px">草稿</button>
+  </div>
+  <div class="page-body" style="padding-bottom:100px">
+    <!-- 固定顶部表单 -->
+    <div style="background:#FFFFFF;padding:14px 16px;border-bottom:1px solid rgba(46,125,50,.08)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;color:#5A7A5A;margin-bottom:5px">所属农场 <span style="color:#C62828">*</span></div>
+          <div class="field" style="padding:9px 12px">
+            <select id="fl-farm" style="flex:1;background:none;color:#1B2E1B;font-size:13px" onchange="loadFlFields()">
+              <option value="">请选择</option>
+              <option value="1" selected>华东示范农场</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#5A7A5A;margin-bottom:5px">作业日期 <span style="color:#C62828">*</span></div>
+          <div class="field" style="padding:9px 12px">
+            <input type="date" id="fl-date" style="flex:1;color:#1B2E1B;font-size:13px">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#5A7A5A;margin-bottom:5px">所属地块 <span style="color:#C62828">*</span></div>
+        <div class="field" style="padding:9px 12px">
+          <select id="fl-field-sel" style="flex:1;background:none;color:#1B2E1B;font-size:13px" onchange="onFlFieldChange()">
+            <option value="">请选择地块</option>
+          </select>
+        </div>
+        <div id="fl-crop-hint" style="font-size:12px;color:#2E7D32;margin-top:5px;padding-left:2px;display:none">🌱 当前种植：<span id="fl-crop-name"></span></div>
+      </div>
+    </div>
+
+    <!-- 类型标签 -->
+    <div style="background:#FFFFFF;border-bottom:1px solid rgba(46,125,50,.08)">
+      <div style="padding:10px 16px 0;font-size:11px;color:#5A7A5A">记录类型</div>
+      <div style="display:flex;overflow-x:auto;padding:8px 12px 12px;gap:6px" id="fl-type-tabs">
+        <button class="fl-type-btn active" data-type="diary"  onclick="switchFlType('diary',this)">📋 记事</button>
+        <button class="fl-type-btn"        data-type="growth" onclick="switchFlType('growth',this)">📏 日生长量</button>
+        <button class="fl-type-btn"        data-type="pest"   onclick="switchFlType('pest',this)">🧪 农药使用</button>
+        <button class="fl-type-btn"        data-type="water"  onclick="switchFlType('water',this)">💧 水肥使用</button>
+        <button class="fl-type-btn"        data-type="issue"  onclick="switchFlType('issue',this)">⚠️ 田间问题</button>
+      </div>
+    </div>
+
+    <!-- 动态表单区域 -->
+    <div style="padding:16px" id="fl-form-body"></div>
+  </div>
+  <!-- 底部提交 -->
+  <div style="position:fixed;bottom:0;left:0;right:0;padding:12px 16px 32px;background:#FFFFFF;border-top:1px solid rgba(46,125,50,.10);box-shadow:0 -4px 20px rgba(46,125,50,.08)">
+    <button class="btn btn-primary btn-full" style="height:48px;font-size:16px;border-radius:12px" onclick="submitFarmlog()">📝 提交记录</button>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="modal-fl-delete">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;font-size:40px;margin-bottom:12px">🗑️</div>
+    <div style="font-size:17px;font-weight:600;text-align:center;margin-bottom:8px">确认删除</div>
+    <div style="font-size:13px;color:#5A7A5A;text-align:center;margin-bottom:24px">删除后无法恢复，确定要删除这条农事记录吗？</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('modal-fl-delete')">取消</button>
+      <button class="btn btn-full" style="background:#C62828;color:#FFFFFF;height:46px;border-radius:12px" onclick="doDeleteFarmlog()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  MOCK API & DATA STORE
+// ═══════════════════════════════════════════
+const DB = {
+  user: { name: '王大明', phone: '13800138000', role: '农户端·大总管' },
+  fields: [
+    { id:1, name:'A区·小麦', area:320, crop:'小麦', status:'growing', ndvi:0.68, location:'北大沟东侧', color:'var(--green)' },
+    { id:2, name:'B区·水稻', area:280, crop:'水稻', status:'growing', ndvi:0.72, location:'灌渠南侧', color:'var(--blue)' },
+    { id:3, name:'C区·玉米', area:410, crop:'玉米', status:'alert',   ndvi:0.41, location:'西坡梯田', color:'var(--amber)' },
+    { id:4, name:'D区·大豆', area:270, crop:'大豆', status:'growing', ndvi:0.65, location:'东南角', color:'var(--green)' },
+  ],
+  tasks: [
+    { id:1, field:'A区·小麦', type:'多光谱巡田', status:'flying',  date:'2024-01-15 09:30', progress:62, photos:124, area:320 },
+    { id:2, field:'C区·玉米', type:'病害检测',   status:'done',    date:'2024-01-14 14:20', progress:100, photos:210, area:410 },
+    { id:3, field:'B区·水稻', type:'RGB正射图',   status:'pending', date:'2024-01-16 08:00', progress:0,  photos:0,   area:280 },
+    { id:4, field:'D区·大豆', type:'多光谱巡田', status:'done',    date:'2024-01-13 10:15', progress:100, photos:180, area:270 },
+  ],
+  alerts: [
+    { id:1, type:'warn', level:'red',   icon:'🌡️', title:'C区玉米高温预警', desc:'当前温度 38.2°C，超出警戒值', time:'10分钟前',   read:false },
+    { id:2, type:'warn', level:'amber', icon:'💧', title:'B区水稻灌溉提醒', desc:'土壤湿度 42%，建议补充灌溉',   time:'1小时前',    read:false },
+    { id:3, type:'todo', level:'blue',  icon:'📸', title:'M3M 任务待审核', desc:'B区水稻RGB正射图任务需确认出发',time:'2小时前',    read:false },
+    { id:4, type:'msg',  level:'green', icon:'✅', title:'A区小麦NDVI分析完成', desc:'报告已生成，平均NDVI 0.68',  time:'昨天 16:30', read:true },
+    { id:5, type:'warn', level:'amber', icon:'🚁', title:'M3M 电量提醒', desc:'电量剩余 24%，建议及时充电',     time:'昨天 14:00', read:true },
+    { id:6, type:'todo', level:'green', icon:'📋', title:'月度报告待确认', desc:'1月份农事记录汇总待审核',        time:'1月10日',    read:true },
+  ],
+  valves: [
+    { id:1, name:'A区主阀',   zone:'北大沟', open:true,  flow:2.4 },
+    { id:2, name:'B区灌渠阀', zone:'灌渠南', open:false, flow:0 },
+    { id:3, name:'C区滴灌阀', zone:'西坡',   open:true,  flow:1.8 },
+    { id:4, name:'D区阀门',   zone:'东南角', open:false, flow:0 },
+  ]
+};
+
+const NDVI_DATA = {
+  A: { avg:0.68, max:0.89, min:0.32, crop:'小麦', bands:{G:0.72,R:0.38,RE:0.55,NIR:0.84}, health:[{label:'优良(>0.6)',pct:58,color:'#2E7D32'},{label:'正常(0.3-0.6)',pct:32,color:'#E65100'},{label:'较差(<0.3)',pct:10,color:'#C62828'}] },
+  B: { avg:0.72, max:0.91, min:0.41, crop:'水稻', bands:{G:0.75,R:0.35,RE:0.58,NIR:0.88}, health:[{label:'优良(>0.6)',pct:71,color:'#2E7D32'},{label:'正常(0.3-0.6)',pct:24,color:'#E65100'},{label:'较差(<0.3)',pct:5,color:'#C62828'}] },
+  C: { avg:0.41, max:0.72, min:0.12, crop:'玉米', bands:{G:0.55,R:0.52,RE:0.41,NIR:0.65}, health:[{label:'优良(>0.6)',pct:22,color:'#2E7D32'},{label:'正常(0.3-0.6)',pct:51,color:'#E65100'},{label:'较差(<0.3)',pct:27,color:'#C62828'}] },
+  D: { avg:0.65, max:0.85, min:0.28, crop:'大豆', bands:{G:0.69,R:0.41,RE:0.52,NIR:0.81}, health:[{label:'优良(>0.6)',pct:53,color:'#2E7D32'},{label:'正常(0.3-0.6)',pct:38,color:'#E65100'},{label:'较差(<0.3)',pct:9,color:'#C62828'}] },
+};
+
+// ═══════════════════════════════════════════
+//  ROUTER
+// ═══════════════════════════════════════════
+let currentPage = 'login';
+let pageStack = [];
+
+function nav(page) {
+  const pages = ['home','fields','drone','ndvi','profile'];
+  const isTab = pages.includes(page);
+
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.add('hidden'); p.classList.remove('prev');
+  });
+
+  const target = document.getElementById('page-' + page);
+  if (target) { target.classList.remove('hidden','prev'); }
+
+  // nav bar
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+  document.getElementById('nav').style.display = isTab ? 'flex' : 'none';
+
+  if (!isTab) pageStack.push(currentPage);
+  currentPage = page;
+
+  // Init page data
+  if (page === 'home')    initHome();
+  if (page === 'fields')  initFields();
+  if (page === 'drone')   initDrone();
+  if (page === 'ndvi')    initNDVI('A');
+  if (page === 'alerts')  initAlerts('all');
+  if (page === 'tracking') startTracking();
+  if (page === 'farmlog') initFarmlog();
+}
+
+function back() {
+  const prev = pageStack.pop() || 'home';
+  nav(prev);
+}
+
+// ═══════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════
+function switchLoginTab(tab) {
+  const btns = document.querySelectorAll('#login-tab button');
+  btns[0].classList.toggle('active', tab==='login');
+  btns[1].classList.toggle('active', tab==='register');
+  document.getElementById('login-fields').style.display   = tab==='login' ? 'flex' : 'none';
+  document.getElementById('register-fields').style.display = tab==='register' ? 'flex' : 'none';
+}
+
+function doLogin() {
+  const phone = document.getElementById('login-phone').value;
+  const pass  = document.getElementById('login-pass').value;
+  if (!phone || !pass) { toast('请填写手机号和密码'); return; }
+  toast('登录成功 ✓');
+  setTimeout(() => nav('home'), 500);
+}
+
+function doLogout() {
+  nav('home');
+  setTimeout(() => {
+    document.querySelectorAll('.page').forEach(p => { p.classList.add('hidden'); p.classList.remove('prev'); });
+    document.getElementById('page-login').classList.remove('hidden');
+    document.getElementById('nav').style.display = 'none';
+    currentPage = 'login';
+    toast('已安全退出');
+  }, 100);
+}
+
+// ═══════════════════════════════════════════
+//  HOME
+// ═══════════════════════════════════════════
+function initHome() {
+  const now = new Date();
+  document.getElementById('home-date').textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${'日一二三四五六'[now.getDay()]}`;
+
+  animateNum('stat-area', 1280, '');
+  animateNum('stat-fields', DB.fields.length, '');
+  animateNum('stat-flights', (DB.farmlogs||[]).length, '');
+  animateNum('stat-alerts', 3, '');
+
+  // recent farmlogs
+  const recentFl = (DB.farmlogs||[]).slice(0,3);
+  const flHtml = recentFl.length ? recentFl.map(r => {
+    const t = FL_TYPE_MAP[r.type];
+    return `<div class="fl-card" onclick="openFarmlogDetail(${r.id})" style="margin-bottom:8px">
+      <div class="fl-card-hd">
+        <span style="font-size:18px">${t.icon}</span>
+        <span class="fl-type-tag" style="background:${t.bg};color:${t.color};font-size:10px">${t.label}</span>
+        <span style="font-size:12px;color:#9DB89C;margin-left:auto">${r.date}</span>
+      </div>
+      <div class="fl-card-body" style="padding:10px 14px">
+        <div style="font-size:13px;font-weight:500">${r.fieldName} <span style="font-weight:400;color:#9DB89C">· ${r.crop}</span></div>
+        <div style="font-size:12px;color:#5A7A5A;margin-top:3px">${getFlPreview(r)}</div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="padding:24px;text-align:center;color:#9DB89C;font-size:13px;background:#FFFFFF;border-radius:14px;border:1px solid rgba(46,125,50,.08)">暂无记录</div>';
+  document.getElementById('recent-farmlogs').innerHTML = flHtml;
+  const taskHtml = DB.tasks.slice(0,3).map(t => `
+    <div class="list-row" onclick="openTask(${t.id})">
+      <div class="list-icon" style="background:${t.status==='flying'?'var(--blue-dim)':t.status==='done'?'var(--green-dim)':'var(--card2)'};font-size:20px">
+        ${t.status==='flying'?'🚁':t.status==='done'?'✅':'⏳'}
+      </div>
+      <div class="list-body">
+        <div class="list-title">${t.field} · ${t.type}</div>
+        <div class="list-sub">${t.date}</div>
+        ${t.status==='flying'?`<div class="prog-wrap" style="margin-top:6px"><div class="prog-fill" style="width:${t.progress}%"></div></div>`:''}
+      </div>
+      <div class="list-right">
+        <span class="badge ${t.status==='flying'?'badge-blue':t.status==='done'?'badge-green':'badge-amber'}">
+          ${t.status==='flying'?'飞行中':t.status==='done'?'已完成':'待执行'}
+        </span>
+      </div>
+    </div>`).join('');
+  document.getElementById('recent-tasks').innerHTML = taskHtml;
+
+  // recent alerts
+  const alertHtml = DB.alerts.filter(a => !a.read).slice(0,3).map(a => `
+    <div class="alert-item" style="background:#FFFFFF;border:1px solid rgba(46,125,50,.09);border-radius:var(--r);">
+      <div style="font-size:22px">${a.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${a.title}</div>
+        <div style="font-size:12px;color:#5A7A5A;margin-top:2px">${a.desc}</div>
+        <div style="font-size:11px;color:#9DB89C;margin-top:4px">${a.time}</div>
+      </div>
+      <span class="badge ${a.level==='red'?'badge-red':a.level==='amber'?'badge-amber':'badge-blue'}" style="font-size:10px">
+        ${a.level==='red'?'紧急':a.level==='amber'?'警告':'待办'}
+      </span>
+    </div>`).join('');
+  document.getElementById('recent-alerts').innerHTML = alertHtml;
+}
+
+function animateNum(id, target, suffix) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let cur = 0; const step = target / 30;
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = Math.round(cur) + suffix;
+    if (cur >= target) clearInterval(t);
+  }, 20);
+}
+
+// ═══════════════════════════════════════════
+//  FIELDS
+// ═══════════════════════════════════════════
+function initFields() {
+  renderFields();
+}
+
+function renderFields() {
+  document.getElementById('field-count').textContent = `共 ${DB.fields.length} 块`;
+  const html = DB.fields.map(f => `
+    <div class="list-row" onclick="toast('查看地块详情: ${f.name}')">
+      <div class="list-icon" style="background:#F2F8F2;font-size:20px">🌾</div>
+      <div class="list-body">
+        <div class="list-title">${f.name}</div>
+        <div class="list-sub">${f.location} · ${f.area}亩 · ${f.crop}</div>
+        <div style="margin-top:6px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${f.ndvi*100}%"></div></div>
+            <span style="font-family:var(--mono);font-size:11px;color:#2E7D32;width:28px">NDVI ${f.ndvi}</span>
+          </div>
+        </div>
+      </div>
+      <div class="list-right">
+        <span class="badge ${f.status==='alert'?'badge-red':'badge-green'}">
+          ${f.status==='alert'?'预警':'正常'}
+        </span>
+      </div>
+    </div>`).join('');
+  document.getElementById('field-list').innerHTML = html;
+}
+
+function showAddField() { openModal('modal-field'); }
+
+function addField() {
+  const name = document.getElementById('new-field-name').value;
+  const area = parseFloat(document.getElementById('new-field-area').value) || 0;
+  const crop = document.getElementById('new-field-crop').value;
+  const loc  = document.getElementById('new-field-loc').value;
+  if (!name || !area || !crop) { toast('请填写完整地块信息'); return; }
+  DB.fields.push({ id: Date.now(), name, area, crop, status:'growing', ndvi:0.5, location:loc || '待定', color:'var(--green)' });
+  closeModal('modal-field');
+  renderFields();
+  document.getElementById('new-field-name').value='';
+  document.getElementById('new-field-area').value='';
+  document.getElementById('new-field-crop').value='';
+  document.getElementById('new-field-loc').value='';
+  toast(`地块「${name}」已添加`);
+}
+
+// ═══════════════════════════════════════════
+//  DRONE
+// ═══════════════════════════════════════════
+let droneInterval = null;
+let taskFilter = 'all';
+
+function initDrone() {
+  renderTasks();
+  startDroneTelemetry();
+}
+
+function renderTasks(filter) {
+  filter = filter || taskFilter;
+  let tasks = filter === 'all' ? DB.tasks : DB.tasks.filter(t => t.status === filter);
+  const html = tasks.map(t => `
+    <div class="list-row" onclick="openTask(${t.id})" style="cursor:pointer">
+      <div class="list-icon" style="background:${t.status==='flying'?'var(--blue-dim)':t.status==='done'?'var(--green-dim)':'var(--card2)'}">
+        <span style="font-size:20px">${t.status==='flying'?'🚁':t.status==='done'?'✅':'⏳'}</span>
+      </div>
+      <div class="list-body">
+        <div class="list-title">${t.field}</div>
+        <div class="list-sub">${t.type} · ${t.area}亩</div>
+        <div style="margin-top:5px;display:flex;align-items:center;gap:8px">
+          ${t.status==='flying'?`<div class="prog-wrap" style="flex:1"><div class="prog-fill" style="width:${t.progress}%"></div></div><span style="font-family:var(--mono);font-size:10px;color:#2E7D32">${t.progress}%</span>`:`<span style="font-size:11px;color:#9DB89C">${t.date}</span>`}
+        </div>
+        ${t.status==='flying'?`<div style="font-size:11px;color:#1565C0;margin-top:3px;font-family:var(--mono)">已拍 ${t.photos} 张</div>`:''}
+      </div>
+      <div class="list-right">
+        <span class="badge ${t.status==='flying'?'badge-blue':t.status==='done'?'badge-green':'badge-amber'}">
+          ${t.status==='flying'?'飞行中':t.status==='done'?'已完成':'待执行'}
+        </span>
+      </div>
+    </div>`).join('') || '<div style="padding:30px;text-align:center;color:#9DB89C">暂无任务</div>';
+  document.getElementById('task-list').innerHTML = html;
+}
+
+function filterTasks(f, el) {
+  taskFilter = f;
+  document.querySelectorAll('[id^="chip-"]').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks(f);
+}
+
+function openTask(id) {
+  const t = DB.tasks.find(x => x.id === id);
+  if (!t) return;
+  if (t.status === 'flying') {
+    pageStack.push(currentPage);
+    document.getElementById('tracking-title').textContent = `${t.field} · 实时轨迹`;
+    nav('tracking');
+  } else if (t.status === 'done') {
+    toast('查看飞行报告');
+  } else {
+    toast('任务尚未开始，确认执行中...');
+  }
+}
+
+function showCreateTask() {
+  const sel = document.getElementById('new-task-field');
+  sel.innerHTML = '<option value="">选择作业地块</option>' +
+    DB.fields.map(f => `<option>${f.name}</option>`).join('');
+  openModal('modal-task');
+}
+
+function createTask() {
+  const field = document.getElementById('new-task-field').value;
+  const type  = document.getElementById('new-task-type').value;
+  const alt   = document.getElementById('new-task-alt').value;
+  if (!field) { toast('请选择作业地块'); return; }
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const f = DB.fields.find(x => x.name === field);
+  DB.tasks.unshift({ id: Date.now(), field, type, status:'pending', date:dateStr, progress:0, photos:0, area:f?f.area:0 });
+  closeModal('modal-task');
+  renderTasks();
+  toast(`任务已创建，KMZ航线文件生成中...`);
+}
+
+function startDroneTelemetry() {
+  if (droneInterval) clearInterval(droneInterval);
+  let batt = 82;
+  droneInterval = setInterval(() => {
+    const alt  = (88 + Math.random()*6).toFixed(1);
+    const spd  = (7 + Math.random()*4).toFixed(1);
+    const dist = Math.round(300 + Math.random()*200);
+    document.getElementById('tele-alt').textContent = alt;
+    document.getElementById('tele-spd').textContent = spd;
+    document.getElementById('tele-dist').textContent = dist;
+    batt = Math.max(0, batt - 0.05);
+    document.getElementById('drone-batt').textContent = batt.toFixed(0) + '%';
+    // update flying task progress
+    const flyTask = DB.tasks.find(t => t.status==='flying');
+    if (flyTask && flyTask.progress < 100) {
+      flyTask.progress = Math.min(100, flyTask.progress + 0.3);
+      flyTask.photos = Math.round(flyTask.progress * 2);
+    }
+  }, 1500);
+}
+
+// ═══════════════════════════════════════════
+//  LIVE TRACKING
+// ═══════════════════════════════════════════
+let trackInterval = null;
+let trackTime = 0;
+
+function startTracking() {
+  // Draw field polygon and flight path
+  const svg = document.getElementById('track-svg');
+  svg.innerHTML = `
+    <polygon class="field-poly" points="40,30 200,20 220,160 50,170"/>
+    <polyline class="flight-line" points="50,40 200,40 200,70 50,70 50,100 200,100 200,130 50,130"/>
+  `;
+
+  // Simulate drone movement along lawnmower pattern
+  const path = [[50,40],[200,40],[200,70],[50,70],[50,100],[200,100],[200,130],[50,130]];
+  let step = 0; let pct = 62;
+
+  // Set initial position
+  const icon = document.getElementById('drone-icon');
+  icon.style.left = '50px'; icon.style.top = '40px';
+
+  if (trackInterval) clearInterval(trackInterval);
+  trackTime = 0;
+
+  trackInterval = setInterval(() => {
+    trackTime++;
+    // Move drone
+    if (step < path.length - 1) {
+      const progress = (trackTime % 40) / 40;
+      const [x1,y1] = path[step]; const [x2,y2] = path[step+1];
+      icon.style.left = (x1 + (x2-x1)*progress) + 'px';
+      icon.style.top  = (y1 + (y2-y1)*progress) + 'px';
+      if (progress >= 0.99) step = (step+1) % (path.length-1);
+    }
+
+    // Update telemetry
+    const alt   = (88 + Math.random()*6).toFixed(1);
+    const spd   = (7 + Math.random()*3).toFixed(1);
+    const batt  = Math.max(20, 78 - trackTime * 0.05);
+    const photos = Math.round(124 + trackTime * 0.5);
+    pct = Math.min(100, 62 + trackTime * 0.12);
+
+    document.getElementById('rt-alt').textContent = alt + ' m';
+    document.getElementById('rt-spd').textContent = spd + ' m/s';
+    document.getElementById('rt-batt').textContent = batt.toFixed(0) + '%';
+    document.getElementById('rt-batt-bar').style.width = batt + '%';
+    document.getElementById('rt-batt-bar').style.background = batt < 30 ? 'linear-gradient(90deg,#C62828,#EF5350)' : '';
+    document.getElementById('rt-photos').textContent = photos;
+    document.getElementById('rt-progress').textContent = pct.toFixed(0) + '%';
+    document.getElementById('rt-prog-bar').style.width = pct + '%';
+
+    // Time
+    const m = Math.floor(trackTime / 20); const s = (trackTime * 3) % 60;
+    document.getElementById('rt-time').textContent = String(m).padStart(2,'0') + ':' + String(Math.round(s)).padStart(2,'0');
+
+    // GPS
+    const lng = (120.4523 + Math.random()*0.001).toFixed(4);
+    const lat  = (30.7821 + Math.random()*0.001).toFixed(4);
+    document.getElementById('track-pos').textContent = `${lng}°E  ${lat}°N`;
+
+    // Multispectral
+    const ndvi = (0.55 + Math.random()*0.18).toFixed(2);
+    document.getElementById('ms-g').textContent   = (0.68 + Math.random()*.1).toFixed(2);
+    document.getElementById('ms-r').textContent   = (0.32 + Math.random()*.1).toFixed(2);
+    document.getElementById('ms-re').textContent  = (0.50 + Math.random()*.1).toFixed(2);
+    document.getElementById('ms-nir').textContent = (0.80 + Math.random()*.1).toFixed(2);
+    document.getElementById('rt-ndvi').textContent = ndvi;
+    document.getElementById('ndvi-pointer').style.left = ((parseFloat(ndvi)+1)/2*100) + '%';
+    const healthy = parseFloat(ndvi) > 0.5;
+    document.getElementById('rt-ndvi-badge').className = 'badge ' + (healthy ? 'badge-green' : 'badge-amber');
+    document.getElementById('rt-ndvi-badge').textContent = healthy ? '健康' : '需关注';
+
+  }, 500);
+}
+
+function pauseTask()    { toast('任务已暂停，无人机悬停'); clearInterval(trackInterval); }
+function returnHome()   { toast('正在返航...'); clearInterval(trackInterval); back(); }
+function emergencyStop(){ toast('⚠️ 紧急停止指令已发送'); clearInterval(trackInterval); back(); }
+
+// ═══════════════════════════════════════════
+//  NDVI
+// ═══════════════════════════════════════════
+let currentNdviField = 'A';
+
+function initNDVI(fieldKey) { renderNDVI(fieldKey); }
+
+function selectNdviField(key, el) {
+  document.querySelectorAll('.chip').forEach(c => { if(c.closest('#page-ndvi')) c.classList.remove('active'); });
+  el.classList.add('active');
+  renderNDVI(key);
+}
+
+function renderNDVI(key) {
+  currentNdviField = key;
+  const d = NDVI_DATA[key];
+  document.getElementById('ndvi-avg').textContent = d.avg;
+  document.getElementById('ndvi-max').textContent = d.max;
+  document.getElementById('ndvi-min').textContent = d.min;
+
+  // Health bars
+  document.getElementById('health-bars').innerHTML = d.health.map(h => `
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:#5A7A5A">${h.label}</span>
+        <span style="font-family:var(--mono);font-size:11px;color:${h.color}">${h.pct}%</span>
+      </div>
+      <div class="prog-wrap"><div style="height:100%;border-radius:4px;background:${h.color};width:${h.pct}%;transition:width 1s ease"></div></div>
+    </div>`).join('');
+
+  // Band bars
+  const bands = [
+    {n:'Green',v:d.bands.G,c:'#2E7D32',nm:'560nm'},
+    {n:'Red',v:d.bands.R,c:'#C62828',nm:'650nm'},
+    {n:'Red Edge',v:d.bands.RE,c:'#E65100',nm:'730nm'},
+    {n:'NIR',v:d.bands.NIR,c:'#1565C0',nm:'860nm'}
+  ];
+  document.getElementById('band-bars').innerHTML = bands.map(b => `
+    <div style="text-align:center;padding:0 4px">
+      <div style="height:80px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:6px">
+        <div style="width:28px;background:${b.c}33;border-radius:4px 4px 0 0;height:${b.v*100}%;min-height:10px;position:relative;border-top:2px solid ${b.c}">
+          <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:10px;color:${b.c};white-space:nowrap">${b.v}</div>
+        </div>
+      </div>
+      <div style="font-size:10px;font-weight:500;color:${b.c}">${b.n}</div>
+      <div style="font-size:9px;color:#9DB89C">${b.nm}</div>
+    </div>`).join('');
+
+  // Insight
+  const insights = {
+    A: '🌾 小麦整体长势良好，NIR反射率高（0.84），红边指数正常，建议关注NDVI低于0.3的10%区域。',
+    B: '🌾 水稻NDVI分布均匀，健康比例达71%，生长状态优秀。建议下周补测一次确认分蘖状态。',
+    C: '⚠️ 玉米整体NDVI偏低，平均值仅0.41，Red波段反射率异常（0.52），疑似部分区域病害或缺水。建议48小时内巡查。',
+    D: '🌱 大豆生长正常，平均NDVI 0.65，结合红边数据分析氮素营养状态良好。'
+  };
+  document.getElementById('ndvi-insight').textContent = insights[key];
+
+  // Prescription
+  const prescriptions = {
+    A: [{icon:'💧',action:'补充灌溉',area:'32亩',detail:'NDVI<0.3区域建议补充灌溉约15mm'},{icon:'🌿',action:'施用追肥',area:'96亩',detail:'建议施用尿素10kg/亩提升含氮量'}],
+    B: [{icon:'✅',action:'维持现状',area:'全区',detail:'生长状态优秀，无需特殊干预'},{icon:'📅',action:'计划收割',area:'全区',detail:'预计30天后可安排收割准备'}],
+    C: [{icon:'🚨',action:'紧急巡查',area:'110亩',detail:'NDVI<0.3区域占27%，建议立即实地勘查'},{icon:'💊',action:'病害防治',area:'74亩',detail:'疑似真菌性病害，建议喷施杀菌剂'},{icon:'💧',action:'紧急补水',area:'110亩',detail:'重度缺水区域建议24小时内补充灌溉'}],
+    D: [{icon:'📊',action:'持续监测',area:'全区',detail:'建议每2周进行一次NDVI采集，跟踪豆荚发育'},{icon:'🐛',action:'虫害预防',area:'全区',detail:'根据往年数据，建议提前防治豆荚螟'}]
+  };
+  document.getElementById('prescription').innerHTML = (prescriptions[key]||[]).map(p => `
+    <div style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#F2F8F2;border-radius:var(--r);border:1px solid rgba(46,125,50,.09)">
+      <div style="font-size:22px">${p.icon}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600">${p.action} <span style="font-size:11px;color:#5A7A5A;font-weight:400">· ${p.area}</span></div>
+        <div style="font-size:12px;color:#5A7A5A;margin-top:3px">${p.detail}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+//  ALERTS
+// ═══════════════════════════════════════════
+function initAlerts(filter) { renderAlerts(filter); }
+
+function switchAlertTab(filter, el) {
+  document.querySelectorAll('#page-alerts .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAlerts(filter);
+}
+
+function renderAlerts(filter) {
+  let list = filter === 'all' ? DB.alerts : DB.alerts.filter(a => a.type === filter.replace('warn','warn').replace('todo','todo').replace('msg','msg'));
+  if (filter === 'warn') list = DB.alerts.filter(a => a.type === 'warn');
+  if (filter === 'todo') list = DB.alerts.filter(a => a.type === 'todo');
+  if (filter === 'msg')  list = DB.alerts.filter(a => a.type === 'msg');
+
+  const html = list.map(a => `
+    <div class="alert-item" onclick="readAlert(${a.id})" style="background:#FFFFFF;border:1px solid ${a.read?'var(--border2)':'var(--border)'};border-left:3px solid ${a.level==='red'?'var(--red)':a.level==='amber'?'var(--amber)':a.level==='blue'?'var(--blue)':'var(--green)'};opacity:${a.read?.65:1}">
+      <div style="font-size:24px">${a.icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-size:14px;font-weight:${a.read?'400':'600'}">${a.title}</div>
+          ${!a.read?'<div style="width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0"></div>':''}
+        </div>
+        <div style="font-size:12px;color:#5A7A5A;margin-top:3px">${a.desc}</div>
+        <div style="font-size:11px;color:#9DB89C;margin-top:5px">${a.time}</div>
+      </div>
+      <span class="badge ${a.level==='red'?'badge-red':a.level==='amber'?'badge-amber':a.level==='blue'?'badge-blue':'badge-green'}" style="font-size:10px;align-self:flex-start">
+        ${a.type==='warn'?'预警':a.type==='todo'?'待办':'消息'}
+      </span>
+    </div>`).join('') || `<div style="padding:40px;text-align:center;color:#9DB89C">暂无${filter==='warn'?'预警':filter==='todo'?'待办':'消息'}</div>`;
+
+  document.getElementById('alert-list').innerHTML = '<div style="display:flex;flex-direction:column;gap:8px">' + html + '</div>';
+}
+
+function readAlert(id) {
+  const a = DB.alerts.find(x => x.id === id);
+  if (a) { a.read = true; initAlerts('all'); toast('已标记为已读'); }
+}
+
+function markAllRead() {
+  DB.alerts.forEach(a => a.read = true);
+  renderAlerts('all');
+  toast('全部已读');
+}
+
+// ═══════════════════════════════════════════
+//  IRRIGATION
+// ═══════════════════════════════════════════
+function showIrrigation() {
+  renderValves();
+  openModal('modal-irrigation');
+}
+
+function renderValves() {
+  document.getElementById('valve-list').innerHTML = DB.valves.map(v => `
+    <div style="background:#FFFFFF;border:1px solid rgba(46,125,50,.09);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <div style="font-size:22px">${v.open?'💧':'🔴'}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500">${v.name}</div>
+        <div style="font-size:12px;color:#5A7A5A;margin-top:2px">${v.zone} · ${v.open?`流量 ${v.flow} L/s`:'已关闭'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="badge ${v.open?'badge-blue':'badge-amber'}">${v.open?'开':'关'}</span>
+        <div style="width:44px;height:24px;border-radius:12px;background:${v.open?'var(--green)':'var(--card2)'};border:1px solid rgba(46,125,50,.14);position:relative;cursor:pointer;transition:.3s" onclick="toggleValve(${v.id})">
+          <div style="position:absolute;top:2px;${v.open?'right:2px':'left:2px'};width:18px;height:18px;border-radius:50%;background:${v.open?'#0C1A0B':'var(--text3)'};transition:.3s"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleValve(id) {
+  const v = DB.valves.find(x => x.id === id);
+  if (!v) return;
+  v.open = !v.open;
+  v.flow = v.open ? (1.5 + Math.random()).toFixed(1) : 0;
+  renderValves();
+  toast(`${v.name} 已${v.open?'开启':'关闭'} — MQTT指令已发送`);
+}
+
+// ═══════════════════════════════════════════
+//  FARM LOG DATA
+// ═══════════════════════════════════════════
+DB.farmlogs = [
+  {
+    id:1, type:'growth', fieldId:1, fieldName:'A区·小麦', farm:'华东示范农场', crop:'小麦',
+    date:'2024-01-15', recorder:'王大明',
+    data:{ points:[
+      {no:1, height:42, growth:1.2, leaves:6, stems:1},
+      {no:2, height:45, growth:1.5, leaves:7, stems:1},
+      {no:3, height:40, growth:0.9, leaves:6, stems:1}
+    ]},
+    photos:['🌾','🌿','📷'], notes:'观测点均位于田块中部，无明显差异。'
+  },
+  {
+    id:2, type:'water', fieldId:2, fieldName:'B区·水稻', farm:'华东示范农场', crop:'水稻',
+    date:'2024-01-14', recorder:'张三',
+    data:{ waterAmt:35, fertilizers:[
+      {no:1, name:'尿素', amount:8, N:46, P:0, K:0},
+      {no:2, name:'复合肥', amount:15, N:15, P:15, K:15}
+    ]},
+    photos:['💧','📷'], notes:'按计划施肥，天气晴好。'
+  },
+  {
+    id:3, type:'pest', fieldId:3, fieldName:'C区·玉米', farm:'华东示范农场', crop:'玉米',
+    date:'2024-01-13', recorder:'王大明',
+    data:{ pesticides:[
+      {no:1, name:'甲维盐', effect:'防治玉米螟', amount:8},
+      {no:2, name:'吡虫啉', effect:'防治蚜虫',   amount:6}
+    ]},
+    photos:['🧪','🌽','📷'], notes:'重点处理东北角区域。'
+  },
+  {
+    id:4, type:'issue', fieldId:3, fieldName:'C区·玉米', farm:'华东示范农场', crop:'玉米',
+    date:'2024-01-12', recorder:'李四',
+    data:{ desc:'发现玉米叶片出现黄化现象，面积约30亩，疑似缺氮或病害引起。', issueType:'缺素', severity:'medium'},
+    photos:['⚠️','🌽'], notes:'已通知技术员前来勘查。'
+  },
+  {
+    id:5, type:'diary', fieldId:4, fieldName:'D区·大豆', farm:'华东示范农场', crop:'大豆',
+    date:'2024-01-10', recorder:'王大明',
+    data:{ content:'今日对D区大豆进行了例行巡查，整体长势良好，无明显病虫害迹象。土壤湿度适中，预计本月底可进入鼓粒期。'},
+    photos:['🌱','📷'], notes:''
+  }
+];
+
+const FL_TYPE_MAP = {
+  diary:  { label:'记事',     color:'#43A047', bg:'rgba(46,125,50,.10)',  icon:'📋' },
+  growth: { label:'日生长量', color:'#1565C0', bg:'rgba(21,101,192,.10)', icon:'📏' },
+  pest:   { label:'农药使用', color:'#E65100', bg:'rgba(230,81,0,.10)',   icon:'🧪' },
+  water:  { label:'水肥使用', color:'#0277BD', bg:'rgba(2,119,189,.10)',  icon:'💧' },
+  issue:  { label:'田间问题', color:'#C62828', bg:'rgba(198,40,40,.10)',  icon:'⚠️' },
+};
+const SEV_MAP = { light:'轻微', medium:'中等', heavy:'严重' };
+
+// ═══════════════════════════════════════════
+//  FARMLOG LIST
+// ═══════════════════════════════════════════
+let flFilter = 'all';
+
+function initFarmlog() {
+  renderFlStats();
+  renderFlList(flFilter);
+}
+
+function filterFarmlog(type, el) {
+  flFilter = type;
+  document.querySelectorAll('[id^="fl-chip-"]').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderFlList(type);
+}
+
+function renderFlStats() {
+  const counts = {};
+  DB.farmlogs.forEach(r => counts[r.type] = (counts[r.type]||0)+1);
+  const total = DB.farmlogs.length;
+  const items = [
+    {label:'全部', val:total, color:'#2E7D32', bg:'rgba(46,125,50,.08)'},
+    ...Object.entries(FL_TYPE_MAP).map(([k,v]) => ({label:v.label, val:counts[k]||0, color:v.color, bg:v.bg}))
+  ];
+  document.getElementById('fl-stats').innerHTML = items.slice(0,4).map(i=>
+    `<div style="flex:1;background:${i.bg};border-radius:10px;padding:10px 8px;text-align:center">
+      <div style="font-family:var(--mono);font-size:18px;font-weight:600;color:${i.color}">${i.val}</div>
+      <div style="font-size:10px;color:#5A7A5A;margin-top:2px">${i.label}</div>
+    </div>`
+  ).join('');
+}
+
+function renderFlList(filter) {
+  const list = filter === 'all' ? DB.farmlogs : DB.farmlogs.filter(r=>r.type===filter);
+  const sorted = [...list].sort((a,b)=>b.date.localeCompare(a.date));
+  if (!sorted.length) {
+    document.getElementById('fl-list').innerHTML =
+      '<div style="padding:48px 0;text-align:center;color:#9DB89C;font-size:14px">暂无记录，点击右上角添加</div>';
+    return;
+  }
+  document.getElementById('fl-list').innerHTML = sorted.map(r => {
+    const t = FL_TYPE_MAP[r.type];
+    const preview = getFlPreview(r);
+    return `<div class="fl-card" onclick="openFarmlogDetail(${r.id})">
+      <div class="fl-card-hd">
+        <span style="font-size:20px">${t.icon}</span>
+        <span class="fl-type-tag" style="background:${t.bg};color:${t.color}">${t.label}</span>
+        <span style="font-size:12px;color:#9DB89C;margin-left:auto">${r.date}</span>
+      </div>
+      <div class="fl-card-body">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px">${r.fieldName} <span style="font-weight:400;color:#9DB89C">· ${r.crop}</span></div>
+        <div style="font-size:12px;color:#5A7A5A;line-height:1.6">${preview}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <span style="font-size:11px;color:#9DB89C">📷 ${r.photos.length}张</span>
+          <span style="font-size:11px;color:#9DB89C">👤 ${r.recorder}</span>
+          ${r.notes?`<span style="font-size:11px;color:#9DB89C">备注已填</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getFlPreview(r) {
+  if (r.type==='diary')  return r.data.content.slice(0,60)+(r.data.content.length>60?'…':'');
+  if (r.type==='growth') return `共 ${r.data.points.length} 个观测点，平均株高 ${(r.data.points.reduce((s,p)=>s+p.height,0)/r.data.points.length).toFixed(1)}cm`;
+  if (r.type==='pest')   return `使用农药 ${r.data.pesticides.length} 种：${r.data.pesticides.map(p=>p.name).join('、')}`;
+  if (r.type==='water')  return `亩用水 ${r.data.waterAmt}m³，化肥 ${r.data.fertilizers.length} 种`;
+  if (r.type==='issue')  return `${r.data.issueType} · ${SEV_MAP[r.data.severity]} · ${r.data.desc.slice(0,40)}…`;
+  return '';
+}
+
+// ═══════════════════════════════════════════
+//  FARMLOG DETAIL
+// ═══════════════════════════════════════════
+let currentFlId = null;
+
+function openFarmlogDetail(id) {
+  currentFlId = id;
+  const r = DB.farmlogs.find(x=>x.id===id);
+  if (!r) { toast('记录不存在'); return; }
+
+  // Use main nav
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('page-farmlog-detail').classList.remove('hidden');
+  document.getElementById('nav').style.display = 'none';
+  pageStack.push(currentPage);
+  currentPage = 'farmlog-detail';
+  renderFlDetail(id);
+}
+
+function renderFlDetail(id) {
+  const r = DB.farmlogs.find(x=>x.id===id);
+  if (!r) {
+    document.getElementById('fl-detail-body').innerHTML =
+      '<div style="padding:48px;text-align:center;color:#9DB89C">记录不存在</div>';
+    return;
+  }
+  const t = FL_TYPE_MAP[r.type];
+  let detailHtml = '';
+
+  if (r.type==='diary') {
+    detailHtml = `<div class="fl-section-body">
+      <div style="font-size:14px;color:#1B2E1B;line-height:1.8">${r.data.content}</div>
+    </div>`;
+  } else if (r.type==='growth') {
+    detailHtml = `<div class="fl-section-body">
+      ${r.data.points.map(p=>`
+        <div style="background:#F7FAF7;border-radius:10px;padding:12px;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:600;color:#2E7D32;margin-bottom:8px">观测点 ${p.no}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="fl-row"><span class="fl-row-label">株高</span><span class="fl-row-val" style="font-family:var(--mono)">${p.height} <span style="font-size:11px;color:#9DB89C">cm</span></span></div>
+            <div class="fl-row"><span class="fl-row-label">日生长量</span><span class="fl-row-val" style="font-family:var(--mono)">${p.growth} <span style="font-size:11px;color:#9DB89C">cm</span></span></div>
+            <div class="fl-row"><span class="fl-row-label">叶数</span><span class="fl-row-val" style="font-family:var(--mono)">${p.leaves} <span style="font-size:11px;color:#9DB89C">片</span></span></div>
+            <div class="fl-row"><span class="fl-row-label">台数</span><span class="fl-row-val" style="font-family:var(--mono)">${p.stems} <span style="font-size:11px;color:#9DB89C">台</span></span></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  } else if (r.type==='pest') {
+    detailHtml = `<div class="fl-section-body">
+      ${r.data.pesticides.map(p=>`
+        <div style="background:#F7FAF7;border-radius:10px;padding:12px;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:600;color:#E65100;margin-bottom:8px">农药 ${p.no}</div>
+          <div class="fl-row"><span class="fl-row-label">名称</span><span class="fl-row-val">${p.name}</span></div>
+          <div class="fl-row"><span class="fl-row-label">主要作用</span><span class="fl-row-val">${p.effect}</span></div>
+          <div class="fl-row"><span class="fl-row-label">用量</span><span class="fl-row-val" style="font-family:var(--mono)">${p.amount} <span style="font-size:11px;color:#9DB89C">g/亩</span></span></div>
+        </div>`).join('')}
+    </div>`;
+  } else if (r.type==='water') {
+    detailHtml = `<div class="fl-section-body">
+      <div class="fl-row"><span class="fl-row-label">亩用水量</span><span class="fl-row-val" style="font-family:var(--mono);color:#0277BD">${r.data.waterAmt} <span style="font-size:11px;color:#9DB89C">m³</span></span></div>
+      <div style="font-size:12px;color:#9DB89C;margin:10px 0 8px">化肥明细</div>
+      ${r.data.fertilizers.map(f=>`
+        <div style="background:#F7FAF7;border-radius:10px;padding:12px;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:600;color:#0277BD;margin-bottom:8px">化肥 ${f.no} · ${f.name}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+            <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:600">${f.amount}</div><div style="font-size:10px;color:#9DB89C">kg/亩</div></div>
+            <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:600;color:#43A047">${f.N}%</div><div style="font-size:10px;color:#9DB89C">氮(N)</div></div>
+            <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:600;color:#E65100">${f.P}%</div><div style="font-size:10px;color:#9DB89C">磷(P)</div></div>
+            <div style="text-align:center"><div style="font-family:var(--mono);font-size:14px;font-weight:600;color:#1565C0">${f.K}%</div><div style="font-size:10px;color:#9DB89C">钾(K)</div></div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  } else if (r.type==='issue') {
+    const sevColor = {light:'#2E7D32',medium:'#E65100',heavy:'#C62828'}[r.data.severity];
+    const sevBg    = {light:'rgba(46,125,50,.08)',medium:'rgba(230,81,0,.08)',heavy:'rgba(198,40,40,.08)'}[r.data.severity];
+    detailHtml = `<div class="fl-section-body">
+      <div class="fl-row"><span class="fl-row-label">问题类型</span><span class="fl-row-val">${r.data.issueType}</span></div>
+      <div class="fl-row"><span class="fl-row-label">严重程度</span>
+        <span style="background:${sevBg};color:${sevColor};padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500">${SEV_MAP[r.data.severity]}</span>
+      </div>
+      <div class="fl-row" style="align-items:flex-start"><span class="fl-row-label">问题描述</span><span class="fl-row-val" style="line-height:1.7">${r.data.desc}</span></div>
+    </div>`;
+  }
+
+  document.getElementById('fl-detail-body').innerHTML = `
+    <div style="padding:0 16px;margin-top:14px">
+      <!-- 基本信息 -->
+      <div class="fl-section">
+        <div class="fl-section-title">基本信息</div>
+        <div class="fl-section-body">
+          <div class="fl-row"><span class="fl-row-label">记录时间</span><span class="fl-row-val">${r.date} 09:00</span></div>
+          <div class="fl-row"><span class="fl-row-label">地块</span><span class="fl-row-val">${r.fieldName} <span style="color:#9DB89C">(${r.farm})</span></span></div>
+          <div class="fl-row"><span class="fl-row-label">类型</span>
+            <span class="fl-type-tag" style="background:${t.bg};color:${t.color}">${t.icon} ${t.label}</span>
+          </div>
+          <div class="fl-row"><span class="fl-row-label">记录人</span><span class="fl-row-val">${r.recorder}</span></div>
+        </div>
+      </div>
+      <!-- 详情 -->
+      <div class="fl-section">
+        <div class="fl-section-title">详细信息</div>
+        ${detailHtml}
+      </div>
+      <!-- 照片 -->
+      ${r.photos.length ? `
+      <div class="fl-section">
+        <div class="fl-section-title">作业照片（${r.photos.length}张）</div>
+        <div class="fl-section-body">
+          <div class="photo-scroll">
+            ${r.photos.map((p,i)=>`<div class="photo-thumb" onclick="toast('查看大图 ${i+1}')">${p}</div>`).join('')}
+          </div>
+        </div>
+      </div>` : ''}
+      <!-- 备注 -->
+      ${r.notes ? `
+      <div class="fl-section">
+        <div class="fl-section-title">备注</div>
+        <div class="fl-section-body" style="font-size:13px;color:#5A7A5A;line-height:1.7">${r.notes}</div>
+      </div>` : ''}
+    </div>`;
+}
+
+function showFarmlogMenu() {
+  document.getElementById('fl-menu').style.display = 'block';
+  document.getElementById('fl-menu-mask').style.display = 'block';
+}
+function closeFarmlogMenu() {
+  document.getElementById('fl-menu').style.display = 'none';
+  document.getElementById('fl-menu-mask').style.display = 'none';
+}
+function editFarmlog() {
+  closeFarmlogMenu();
+  navFarmlogAdd(currentFlId);
+}
+function confirmDeleteFarmlog() {
+  closeFarmlogMenu();
+  openModal('modal-fl-delete');
+}
+function doDeleteFarmlog() {
+  DB.farmlogs = DB.farmlogs.filter(r=>r.id!==currentFlId);
+  closeModal('modal-fl-delete');
+  toast('删除成功');
+  // Navigate back to list and refresh
+  setTimeout(() => {
+    const prev = pageStack.pop() || 'farmlog';
+    document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+    const target = document.getElementById('page-' + (prev === 'farmlog' ? 'farmlog' : prev));
+    if (target) target.classList.remove('hidden');
+    const isTab = ['home','fields','drone','ndvi','profile'].includes(prev);
+    document.getElementById('nav').style.display = isTab ? 'flex' : 'none';
+    currentPage = prev;
+    if (prev === 'farmlog') initFarmlog();
+  }, 400);
+}
+function exportFarmlogDetail() {
+  toast('正在导出 Excel 文件…');
+  setTimeout(()=>toast('导出成功，文件已保存'), 1200);
+}
+
+// ═══════════════════════════════════════════
+//  FARMLOG ADD / EDIT
+// ═══════════════════════════════════════════
+let flCurrentType = 'diary';
+let flEditId = null;
+let flGrowthPoints = [];
+let flPesticides = [];
+let flFertilizers = [];
+let flSeverity = 'light';
+let flPhotos = [];
+
+function navFarmlogAdd(editId) {
+  flEditId = editId || null;
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('page-farmlog-add').classList.remove('hidden');
+  document.getElementById('nav').style.display = 'none';
+  pageStack.push(currentPage);
+  currentPage = 'farmlog-add';
+  initFarmlogAdd();
+}
+
+function initFarmlogAdd() {
+  // Set today date
+  const today = new Date();
+  const d = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  document.getElementById('fl-date').value = d;
+  document.getElementById('fl-date').max = d;
+
+  // Populate field dropdown
+  const sel = document.getElementById('fl-field-sel');
+  sel.innerHTML = '<option value="">请选择地块</option>' +
+    DB.fields.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+
+  // Reset
+  flGrowthPoints = []; flPesticides = []; flFertilizers = [];
+  flSeverity = 'light'; flPhotos = [];
+
+  if (flEditId) {
+    // Pre-fill for edit
+    document.getElementById('fl-add-title').textContent = '编辑农事记录';
+    const r = DB.farmlogs.find(x=>x.id===flEditId);
+    if (r) {
+      sel.value = r.fieldId;
+      onFlFieldChange();
+      document.getElementById('fl-date').value = r.date;
+      switchFlType(r.type, document.querySelector(`[data-type="${r.type}"]`));
+      if (r.type==='growth') flGrowthPoints = r.data.points.map(p=>({...p}));
+      if (r.type==='pest')   flPesticides = r.data.pesticides.map(p=>({...p}));
+      if (r.type==='water')  { flFertilizers = r.data.fertilizers.map(f=>({...f})); }
+      if (r.type==='issue')  flSeverity = r.data.severity;
+      flPhotos = [...r.photos];
+    }
+  } else {
+    document.getElementById('fl-add-title').textContent = '添加农事记录';
+    switchFlType('diary', document.querySelector('[data-type="diary"]'));
+  }
+}
+
+function loadFlFields() { /* farms only one in demo */ }
+
+function onFlFieldChange() {
+  const id = parseInt(document.getElementById('fl-field-sel').value);
+  const field = DB.fields.find(f=>f.id===id);
+  const hint = document.getElementById('fl-crop-hint');
+  if (field) {
+    hint.style.display = 'block';
+    document.getElementById('fl-crop-name').textContent = field.crop;
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function switchFlType(type, el) {
+  flCurrentType = type;
+  document.querySelectorAll('.fl-type-btn').forEach(b=>b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderFlForm(type);
+}
+
+function renderFlForm(type) {
+  const body = document.getElementById('fl-form-body');
+  let html = '';
+
+  if (type === 'diary') {
+    html = `
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:#5A7A5A;margin-bottom:6px">记事内容 <span style="color:#C62828">*</span> <span style="color:#9DB89C;float:right" id="diary-count">0/500</span></div>
+        <textarea id="fl-diary-content" maxlength="500" rows="6"
+          style="width:100%;background:#F7FAF7;border:1.5px solid rgba(46,125,50,.2);border-radius:10px;padding:12px;font-size:14px;color:#1B2E1B;font-family:var(--sans);resize:none;line-height:1.7"
+          placeholder="请输入今天的农事记录内容…"
+          oninput="document.getElementById('diary-count').textContent=this.value.length+'/500'"></textarea>
+      </div>`;
+  } else if (type === 'growth') {
+    html = `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;color:#5A7A5A">观测点列表 <span style="color:#C62828">*</span></span>
+          <span style="font-size:11px;color:#9DB89C" id="growth-count">0/10 个</span>
+        </div>
+        <div id="growth-points"></div>
+        <button class="add-row-btn" id="growth-add-btn" onclick="addGrowthPoint()">＋ 添加观测点</button>
+      </div>`;
+  } else if (type === 'pest') {
+    html = `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;color:#5A7A5A">农药列表 <span style="color:#C62828">*</span></span>
+          <span style="font-size:11px;color:#9DB89C" id="pest-count">0/10 种</span>
+        </div>
+        <div id="pest-list"></div>
+        <button class="add-row-btn" id="pest-add-btn" onclick="addPesticide()">＋ 添加农药</button>
+      </div>`;
+  } else if (type === 'water') {
+    html = `
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:#5A7A5A;margin-bottom:6px">亩用水量（m³） <span style="color:#C62828">*</span></div>
+        <div class="field" style="padding:10px 14px">
+          <span style="color:#0277BD">💧</span>
+          <input type="number" id="fl-water-amt" placeholder="请输入亩用水量" min="0" max="9999" style="flex:1;font-size:15px;color:#1B2E1B">
+          <span style="color:#9DB89C;font-size:13px">m³</span>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:12px;color:#5A7A5A">化肥列表</span>
+          <span style="font-size:11px;color:#9DB89C" id="fert-count">0/10 种</span>
+        </div>
+        <div id="fert-list"></div>
+        <button class="add-row-btn" id="fert-add-btn" onclick="addFertilizer()">＋ 添加化肥</button>
+      </div>`;
+  } else if (type === 'issue') {
+    html = `
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:#5A7A5A;margin-bottom:6px">问题描述 <span style="color:#C62828">*</span> <span style="color:#9DB89C;float:right" id="issue-count">0/500</span></div>
+        <textarea id="fl-issue-desc" maxlength="500" rows="5"
+          style="width:100%;background:#F7FAF7;border:1.5px solid rgba(46,125,50,.2);border-radius:10px;padding:12px;font-size:14px;color:#1B2E1B;font-family:var(--sans);resize:none;line-height:1.7"
+          placeholder="请详细描述田间发现的问题…"
+          oninput="document.getElementById('issue-count').textContent=this.value.length+'/500'"></textarea>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:#5A7A5A;margin-bottom:6px">问题类型 <span style="color:#C62828">*</span></div>
+        <div class="field" style="padding:9px 12px">
+          <select id="fl-issue-type" style="flex:1;background:none;color:#1B2E1B;font-size:14px;font-family:var(--sans)">
+            <option value="">请选择</option>
+            <option>病虫害</option><option>杂草</option><option>缺素</option>
+            <option>干旱</option><option>涝害</option><option>冻害</option><option>其他</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:#5A7A5A;margin-bottom:8px">严重程度 <span style="color:#C62828">*</span></div>
+        <div class="severity-group" id="sev-group">
+          <button class="sev-btn active-light" onclick="setSeverity('light',this)">轻微</button>
+          <button class="sev-btn" onclick="setSeverity('medium',this)">中等</button>
+          <button class="sev-btn" onclick="setSeverity('heavy',this)">严重</button>
+        </div>
+      </div>`;
+  }
+
+  // Common: photo upload + notes
+  html += `
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:#5A7A5A;margin-bottom:8px">作业照片 <span style="color:#9DB89C">（最多9张）</span></div>
+      <div class="photo-grid" id="fl-photo-grid">
+        <div class="photo-slot" onclick="addFlPhoto()"><span>📷</span>添加照片</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#5A7A5A;margin-bottom:6px">备注 <span style="color:#9DB89C">（选填，最多100字）</span> <span style="color:#9DB89C;float:right" id="notes-count">0/100</span></div>
+      <textarea id="fl-notes" maxlength="100" rows="2"
+        style="width:100%;background:#F7FAF7;border:1.5px solid rgba(46,125,50,.12);border-radius:10px;padding:10px 12px;font-size:14px;color:#1B2E1B;font-family:var(--sans);resize:none"
+        placeholder="补充说明…"
+        oninput="document.getElementById('notes-count').textContent=this.value.length+'/100'"></textarea>
+    </div>`;
+
+  body.innerHTML = html;
+
+  // Render pre-existing data for edit mode
+  if (type === 'growth' && flGrowthPoints.length) flGrowthPoints.forEach((p,i)=>renderGrowthCard(i));
+  if (type === 'pest'   && flPesticides.length)   flPesticides.forEach((p,i)=>renderPestCard(i));
+  if (type === 'water'  && flFertilizers.length)  flFertilizers.forEach((f,i)=>renderFertCard(i));
+  if (type === 'issue') {
+    setSeverity(flSeverity, document.querySelectorAll('.sev-btn')[{light:0,medium:1,heavy:2}[flSeverity]]);
+  }
+  updateFlPhotoGrid();
+}
+
+// ── Growth points ─────────────────────────
+function addGrowthPoint() {
+  if (flGrowthPoints.length >= 10) { toast('最多添加10个观测点'); return; }
+  flGrowthPoints.push({no: flGrowthPoints.length+1, height:'', growth:'', leaves:'', stems:''});
+  renderGrowthCard(flGrowthPoints.length-1);
+  updateFlCounts();
+}
+function renderGrowthCard(i) {
+  const p = flGrowthPoints[i];
+  const container = document.getElementById('growth-points');
+  const div = document.createElement('div');
+  div.className = 'obs-card'; div.id = `gp-card-${i}`;
+  div.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:#2E7D32">观测点 ${i+1}</div>
+    <div class="obs-card-del" onclick="removeGrowthPoint(${i})">×</div>
+    <div class="obs-grid">
+      <div class="obs-field"><label>株高（cm，0-999）</label><input type="number" min="0" max="999" value="${p.height}" placeholder="株高" oninput="flGrowthPoints[${i}].height=parseFloat(this.value)||''"></div>
+      <div class="obs-field"><label>日生长量（cm，0-99）</label><input type="number" min="0" max="99" step="0.1" value="${p.growth}" placeholder="日生长量" oninput="flGrowthPoints[${i}].growth=parseFloat(this.value)||''"></div>
+      <div class="obs-field"><label>叶数（片）</label><input type="number" min="0" max="99" value="${p.leaves}" placeholder="叶数" oninput="flGrowthPoints[${i}].leaves=parseInt(this.value)||''"></div>
+      <div class="obs-field"><label>台数（台）</label><input type="number" min="0" max="99" value="${p.stems}" placeholder="台数" oninput="flGrowthPoints[${i}].stems=parseInt(this.value)||''"></div>
+    </div>`;
+  container.appendChild(div);
+  updateFlCounts();
+}
+function removeGrowthPoint(i) {
+  flGrowthPoints.splice(i,1);
+  document.getElementById('growth-points').innerHTML = '';
+  flGrowthPoints.forEach((p,idx)=>{ p.no=idx+1; renderGrowthCard(idx); });
+  updateFlCounts();
+}
+
+// ── Pesticides ────────────────────────────
+function addPesticide() {
+  if (flPesticides.length >= 10) { toast('最多添加10种农药'); return; }
+  flPesticides.push({no: flPesticides.length+1, name:'', effect:'', amount:''});
+  renderPestCard(flPesticides.length-1);
+}
+function renderPestCard(i) {
+  const p = flPesticides[i];
+  const container = document.getElementById('pest-list');
+  const div = document.createElement('div');
+  div.className = 'obs-card'; div.id = `pest-card-${i}`;
+  div.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:#E65100">农药 ${i+1}</div>
+    <div class="obs-card-del" onclick="removePesticide(${i})">×</div>
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+      <div class="obs-field"><label>农药名称</label><input type="text" value="${p.name}" placeholder="请输入名称" oninput="flPesticides[${i}].name=this.value"></div>
+      <div class="obs-field"><label>主要作用</label><input type="text" value="${p.effect}" placeholder="如：防治玉米螟" oninput="flPesticides[${i}].effect=this.value"></div>
+      <div class="obs-field"><label>用量（g/亩，0-9999）</label><input type="number" min="0" max="9999" value="${p.amount}" placeholder="用量" oninput="flPesticides[${i}].amount=parseFloat(this.value)||''"></div>
+    </div>`;
+  container.appendChild(div);
+  document.getElementById('pest-count').textContent = flPesticides.length + '/10 种';
+}
+function removePesticide(i) {
+  flPesticides.splice(i,1);
+  document.getElementById('pest-list').innerHTML = '';
+  flPesticides.forEach((p,idx)=>{ p.no=idx+1; renderPestCard(idx); });
+  document.getElementById('pest-count').textContent = flPesticides.length + '/10 种';
+}
+
+// ── Fertilizers ───────────────────────────
+function addFertilizer() {
+  if (flFertilizers.length >= 10) { toast('最多添加10种化肥'); return; }
+  flFertilizers.push({no: flFertilizers.length+1, name:'', amount:'', N:'', P:'', K:''});
+  renderFertCard(flFertilizers.length-1);
+}
+function renderFertCard(i) {
+  const f = flFertilizers[i];
+  const container = document.getElementById('fert-list');
+  const div = document.createElement('div');
+  div.className = 'obs-card'; div.id = `fert-card-${i}`;
+  div.innerHTML = `
+    <div style="font-size:12px;font-weight:600;color:#0277BD">化肥 ${i+1}</div>
+    <div class="obs-card-del" onclick="removeFertilizer(${i})">×</div>
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+      <div class="obs-field"><label>化肥名称</label><input type="text" value="${f.name}" placeholder="如：尿素" oninput="flFertilizers[${i}].name=this.value"></div>
+      <div class="obs-grid">
+        <div class="obs-field"><label>亩用量（kg）</label><input type="number" min="0" max="9999" value="${f.amount}" placeholder="kg" oninput="flFertilizers[${i}].amount=parseFloat(this.value)||''"></div>
+        <div class="obs-field"><label>氮含量（%）</label><input type="number" min="0" max="100" value="${f.N}" placeholder="%" oninput="flFertilizers[${i}].N=parseFloat(this.value)||''"></div>
+        <div class="obs-field"><label>磷含量（%）</label><input type="number" min="0" max="100" value="${f.P}" placeholder="%" oninput="flFertilizers[${i}].P=parseFloat(this.value)||''"></div>
+        <div class="obs-field"><label>钾含量（%）</label><input type="number" min="0" max="100" value="${f.K}" placeholder="%" oninput="flFertilizers[${i}].K=parseFloat(this.value)||''"></div>
+      </div>
+    </div>`;
+  container.appendChild(div);
+  document.getElementById('fert-count').textContent = flFertilizers.length + '/10 种';
+}
+function removeFertilizer(i) {
+  flFertilizers.splice(i,1);
+  document.getElementById('fert-list').innerHTML = '';
+  flFertilizers.forEach((f,idx)=>{ f.no=idx+1; renderFertCard(idx); });
+  document.getElementById('fert-count').textContent = flFertilizers.length + '/10 种';
+}
+
+function updateFlCounts() {
+  const gc = document.getElementById('growth-count');
+  if (gc) gc.textContent = flGrowthPoints.length + '/10 个';
+}
+
+// ── Severity ──────────────────────────────
+function setSeverity(sev, el) {
+  flSeverity = sev;
+  document.querySelectorAll('.sev-btn').forEach(b=>b.className='sev-btn');
+  if (el) el.className = `sev-btn active-${sev}`;
+}
+
+// ── Photos ────────────────────────────────
+const DEMO_PHOTOS = ['🌾','🌿','🌽','🌱','📷','🌸','🍀','🌳','🌻'];
+function addFlPhoto() {
+  if (flPhotos.length >= 9) { toast('最多添加9张照片'); return; }
+  flPhotos.push(DEMO_PHOTOS[flPhotos.length % DEMO_PHOTOS.length]);
+  updateFlPhotoGrid();
+  toast('照片已添加（演示模式）');
+}
+function removeFlPhoto(i) {
+  flPhotos.splice(i,1);
+  updateFlPhotoGrid();
+}
+function updateFlPhotoGrid() {
+  const grid = document.getElementById('fl-photo-grid');
+  if (!grid) return;
+  let html = flPhotos.map((p,i)=>`
+    <div style="aspect-ratio:1;border-radius:10px;background:#EEF6EE;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;border:1px solid rgba(46,125,50,.12)" onclick="toast('预览照片 ${i+1}')">
+      ${p}
+      <div onclick="event.stopPropagation();removeFlPhoto(${i})" style="position:absolute;top:3px;right:3px;width:18px;height:18px;background:#C62828;border-radius:50%;color:#FFFFFF;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer">×</div>
+    </div>`).join('');
+  if (flPhotos.length < 9) {
+    html += `<div class="photo-slot" onclick="addFlPhoto()"><span>📷</span>添加照片</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ── Submit ────────────────────────────────
+function submitFarmlog() {
+  const fieldId = parseInt(document.getElementById('fl-field-sel').value);
+  const date    = document.getElementById('fl-date').value;
+  if (!fieldId) { toast('请先选择所属地块'); return; }
+  if (!date)    { toast('请选择作业日期'); return; }
+
+  const field = DB.fields.find(f=>f.id===fieldId);
+  const notes = (document.getElementById('fl-notes')||{}).value || '';
+  let data = {};
+
+  if (flCurrentType === 'diary') {
+    const content = (document.getElementById('fl-diary-content')||{}).value || '';
+    if (!content.trim()) { toast('请填写记事内容'); return; }
+    data = { content };
+  } else if (flCurrentType === 'growth') {
+    if (!flGrowthPoints.length) { toast('请至少添加一个观测点'); return; }
+    if (flGrowthPoints.some(p=>!p.height && p.height!==0)) { toast('请填写完整的株高数据'); return; }
+    data = { points: flGrowthPoints };
+  } else if (flCurrentType === 'pest') {
+    if (!flPesticides.length) { toast('请至少添加一种农药'); return; }
+    if (flPesticides.some(p=>!p.name)) { toast('请填写农药名称'); return; }
+    data = { pesticides: flPesticides };
+  } else if (flCurrentType === 'water') {
+    const waterAmt = parseFloat((document.getElementById('fl-water-amt')||{}).value);
+    if (!waterAmt && waterAmt!==0) { toast('请填写亩用水量'); return; }
+    data = { waterAmt, fertilizers: flFertilizers };
+  } else if (flCurrentType === 'issue') {
+    const desc = (document.getElementById('fl-issue-desc')||{}).value || '';
+    const issueType = (document.getElementById('fl-issue-type')||{}).value || '';
+    if (!desc.trim()) { toast('请填写问题描述'); return; }
+    if (!issueType)   { toast('请选择问题类型'); return; }
+    data = { desc, issueType, severity: flSeverity };
+  }
+
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const newRecord = {
+    id: flEditId || Date.now(),
+    type: flCurrentType,
+    fieldId, fieldName: field.name,
+    farm: '华东示范农场',
+    crop: field.crop,
+    date,
+    recorder: '王大明',
+    data, photos: [...flPhotos], notes
+  };
+
+  if (flEditId) {
+    const idx = DB.farmlogs.findIndex(r=>r.id===flEditId);
+    if (idx !== -1) DB.farmlogs[idx] = newRecord;
+    toast('记录已更新 ✓');
+    setTimeout(()=>{ flEditId=null; back(); }, 600);
+    return;
+  } else {
+    DB.farmlogs.unshift(newRecord);
+    toast('提交成功 ✓，可继续添加');
+  }
+
+  // Reset form for continued same-type entry
+  flGrowthPoints=[]; flPesticides=[]; flFertilizers=[];
+  flPhotos=[]; flSeverity='light';
+  renderFlForm(flCurrentType);
+}
+
+function saveFarmlogDraft() { toast('草稿已保存'); }
+
+
+
+// ═══════════════════════════════════════════
+//  WALLET DATA
+// ═══════════════════════════════════════════
+DB.wallet = {
+  balance: 5800.00,
+  accounts: [
+    { id:1, type:'corporate', icon:'🏢', label:'对公银行卡', name:'华东农业科技有限公司', bankName:'建设银行', cardNo:'**** **** **** 8888', tag:'对公' },
+    { id:2, type:'personal',  icon:'💳', label:'个人银行卡', name:'王大明', bankName:'农业银行',  cardNo:'**** **** **** 6688', tag:'个人' },
+  ],
+  transactions: [
+    { id:1, type:'income',   time:'2024-01-15 14:32', label:'订单收入', ref:'ORD202401150012', amt:+4380.00, status:'success' },
+    { id:2, type:'withdraw', time:'2024-01-14 09:15', label:'提现',     ref:'建设银行 8888',    amt:-1000.00, status:'success' },
+    { id:3, type:'income',   time:'2024-01-12 16:48', label:'订单收入', ref:'ORD202401120008', amt:+2560.00, status:'success' },
+    { id:4, type:'withdraw', time:'2024-01-10 10:20', label:'提现',     ref:'农业银行 6688',    amt:-3000.00, status:'processing' },
+    { id:5, type:'income',   time:'2024-01-08 11:05', label:'订单收入', ref:'ORD202401080003', amt:+1980.00, status:'success' },
+    { id:6, type:'income',   time:'2024-01-05 09:33', label:'订单收入', ref:'ORD202401050001', amt:+3200.00, status:'success' },
+    { id:7, type:'withdraw', time:'2023-12-28 14:10', label:'提现',     ref:'微信支付',          amt:-2000.00, status:'success' },
+    { id:8, type:'income',   time:'2023-12-22 08:55', label:'订单收入', ref:'ORD202312220020', amt:+5100.00, status:'success' },
+  ]
+};
+
+const ACCT_FORMS = {
+  corporate: {
+    title:'填写对公银行卡信息',
+    fields:[
+      {id:'f-corp-name',  label:'企业名称',       type:'text', placeholder:'请输入企业名称',         required:true},
+      {id:'f-corp-card',  label:'对公银行卡号',   type:'tel',  placeholder:'请输入对公银行卡号',       required:true},
+      {id:'f-corp-bank',  label:'开户行名称',     type:'text', placeholder:'如：中国建设银行北京分行', required:true},
+      {id:'f-corp-phone', label:'银行预留手机号', type:'tel',  placeholder:'请输入预留手机号', required:true, maxlength:11},
+      {id:'f-corp-sms',   label:'短信验证码',     type:'tel',  placeholder:'请输入验证码',     required:true, maxlength:6, smsBtn:true},
+    ]
+  },
+  personal: {
+    title:'填写个人银行卡信息',
+    fields:[
+      {id:'f-per-holder', label:'持卡人姓名',     type:'text', placeholder:'请输入姓名',      required:true},
+      {id:'f-per-card',   label:'银行卡号',       type:'tel',  placeholder:'请输入银行卡号',   required:true},
+      {id:'f-per-bank',   label:'开户行名称',     type:'text', placeholder:'如：中国农业银行', required:true},
+      {id:'f-per-phone',  label:'银行预留手机号', type:'tel',  placeholder:'请输入预留手机号', required:true, maxlength:11},
+      {id:'f-per-sms',    label:'短信验证码',     type:'tel',  placeholder:'请输入验证码',     required:true, maxlength:6, smsBtn:true},
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════
+//  WALLET NAVIGATION
+// ═══════════════════════════════════════════
+function navWallet() { navPage('wallet'); }
+
+function navPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.remove('hidden');
+  document.getElementById('nav').style.display = 'none';
+  pageStack.push(currentPage);
+  currentPage = page;
+
+  if (page === 'wallet')      initWalletHome();
+  if (page === 'add-account') initAddAccount(null);
+  if (page === 'tx-list')     initTxList('all');
+  if (page === 'withdraw')    initWithdraw();
+}
+
+// ═══════════════════════════════════════════
+//  WALLET HOME  5.3.1.1
+// ═══════════════════════════════════════════
+function initWalletHome() {
+  const b = DB.wallet.balance;
+  const s = b !== null ? b.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '—';
+  document.getElementById('wallet-balance-amt').textContent = s;
+  const ph = document.getElementById('profile-balance');
+  if (ph) ph.textContent = '余额 ¥' + s;
+
+  // Preview 3 latest transactions
+  document.getElementById('wallet-tx-preview').innerHTML =
+    DB.wallet.transactions.slice(0,3).map(tx => renderTxItem(tx)).join('') ||
+    '<div style="padding:20px;text-align:center;color:#9DB89C;font-size:13px">暂无明细</div>';
+
+  renderWalletAccounts();
+}
+
+function renderWalletAccounts() {
+  const list = DB.wallet.accounts;
+  const el = document.getElementById('wallet-acct-list');
+  if (!list.length) {
+    el.innerHTML = '<div style="background:#FFFFFF;border:1px solid rgba(46,125,50,.10);border-radius:14px;padding:24px;text-align:center;color:#9DB89C;font-size:13px">暂无绑定账户</div>';
+    return;
+  }
+  el.innerHTML = list.map(a => `
+    <div class="acct-card">
+      <div class="acct-card-icon" style="background:${acctBg(a.type)}">${a.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:500;color:#1B2E1B">${(a.type==='wechat'||a.type==='alipay') ? a.name : a.bankName+' 尾号 '+a.cardNo.slice(-4)}</div>
+        <div style="font-size:11px;color:#9DB89C;margin-top:2px">${a.name}</div>
+      </div>
+      <span class="badge" style="background:${acctBg(a.type)};color:${acctColor(a.type)};font-size:10px">${a.tag}</span>
+      <button onclick="replaceAccount(${a.id})" style="margin-left:8px;padding:5px 12px;background:rgba(46,125,50,.08);color:#2E7D32;border-radius:8px;font-size:12px;font-weight:500;border:none;cursor:pointer;font-family:var(--sans)">更换</button>
+    </div>`).join('');
+}
+
+function acctBg(t)    { return ({corporate:'rgba(255,111,0,.10)',personal:'rgba(46,125,50,.08)',wechat:'rgba(7,193,96,.10)',alipay:'rgba(21,101,192,.10)'})[t]||'rgba(46,125,50,.08)'; }
+function acctColor(t) { return ({corporate:'#FF6F00',personal:'#2E7D32',wechat:'#07C160',alipay:'#1565C0'})[t]||'#2E7D32'; }
+
+function replaceAccount(id) {
+  const acct = DB.wallet.accounts.find(a => a.id === id);
+  if (!acct) return;
+  document.getElementById('add-acct-title').textContent = '更换收款账户';
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById('page-add-account').classList.remove('hidden');
+  pageStack.push(currentPage); currentPage = 'add-account';
+  initAddAccount(acct);
+}
+
+// ═══════════════════════════════════════════
+//  ADD ACCOUNT  5.3.1.2 / 5.3.1.3
+// ═══════════════════════════════════════════
+let selectedAcctType = null;
+let editingAcctId = null;
+const smsTimers = {};
+
+function initAddAccount(editAcct) {
+  editingAcctId = editAcct ? editAcct.id : null;
+  selectedAcctType = editAcct ? editAcct.type : null;
+
+  // Reset UI
+  ['add-acct-step1','add-acct-step2','add-acct-success'].forEach((id,i) => {
+    document.getElementById(id).style.display = i===0 ? 'block' : 'none';
+  });
+  setStepUI(1);
+  document.querySelectorAll('.acct-type-card').forEach(c => c.classList.remove('selected'));
+
+  if (editAcct) {
+    const card = document.querySelector(`[onclick="selectAcctType('${editAcct.type}',this)"]`);
+    if (card) card.classList.add('selected');
+    // If bank type: jump straight to form
+    if (editAcct.type === 'corporate' || editAcct.type === 'personal') {
+      setTimeout(() => goAddAcctStep2(editAcct), 0);
+    }
+  }
+}
+
+function selectAcctType(type, el) {
+  selectedAcctType = type;
+  document.querySelectorAll('.acct-type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function goAddAcctStep2(prefill) {
+  if (!selectedAcctType) { toast('请选择账户类型'); return; }
+
+  if (selectedAcctType === 'wechat' || selectedAcctType === 'alipay') {
+    const isWx = selectedAcctType === 'wechat';
+    document.getElementById('auth-icon').textContent  = isWx ? '💚' : '🔵';
+    document.getElementById('auth-title').textContent = (isWx ? '微信' : '支付宝') + '授权绑定';
+    document.querySelectorAll('#modal-auth .modal-sheet > div')[3].textContent =
+      `即将跳转${isWx?'微信':'支付宝'}进行授权，授权成功后自动绑定。`;
+    openModal('modal-auth'); return;
+  }
+
+  const formDef = ACCT_FORMS[selectedAcctType];
+  if (!formDef) return;
+
+  document.getElementById('add-acct-step1').style.display = 'none';
+  document.getElementById('add-acct-step2').style.display = 'block';
+  document.getElementById('add-acct-form-title').textContent = formDef.title;
+  setStepUI(2);
+
+  document.getElementById('add-acct-form').innerHTML =
+    formDef.fields.map(f => `
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;color:#5A7A5A;margin-bottom:6px">${f.label}${f.required?' <span style="color:#C62828">*</span>':''}</div>
+        <div class="field" style="padding:10px 14px">
+          <input type="${f.type}" id="${f.id}" ${f.maxlength?`maxlength="${f.maxlength}"`:''}
+            placeholder="${f.placeholder}" style="flex:1;font-size:14px;color:#1B2E1B">
+          ${f.smsBtn?`<button onclick="sendSmsCode('${f.id}')" id="sms-btn-${f.id}"
+            style="white-space:nowrap;color:#FF6F00;font-size:12px;font-weight:600;font-family:var(--sans);background:none;border:none;cursor:pointer;padding-left:8px">获取验证码</button>`:''}
+        </div>
+      </div>`).join('') +
+    `<button class="btn btn-orange btn-full" style="margin-top:8px;height:48px;border-radius:12px;font-size:15px;font-weight:600" onclick="confirmBindAccount()">确认绑定</button>
+     <div style="font-size:11px;color:#9DB89C;text-align:center;margin-top:10px;line-height:1.6">账户信息加密传输，安全有保障</div>`;
+
+  // Pre-fill for edit
+  const acct = prefill && typeof prefill === 'object' ? prefill : null;
+  if (acct) {
+    if (selectedAcctType === 'corporate') {
+      const n=document.getElementById('f-corp-name'); if(n) n.value=acct.name;
+      const c=document.getElementById('f-corp-card'); if(c){c.value=acct.cardNo;}
+      const b=document.getElementById('f-corp-bank'); if(b) b.value=acct.bankName;
+    } else {
+      const h=document.getElementById('f-per-holder'); if(h) h.value=acct.name;
+      const c=document.getElementById('f-per-card');   if(c){c.value=acct.cardNo;}
+      const b=document.getElementById('f-per-bank');   if(b) b.value=acct.bankName;
+    }
+  }
+}
+
+function setStepUI(step) {
+  const d1=document.getElementById('step1-dot'), d2=document.getElementById('step2-dot'), ln=document.getElementById('step-line');
+  if(!d1) return;
+  d1.className = step===1 ? 'step-dot active' : 'step-dot done';
+  d2.className = step===2 ? 'step-dot active' : 'step-dot pending';
+  ln.className = step===2 ? 'step-line done' : 'step-line pending';
+}
+
+function sendSmsCode(fieldId) {
+  if (smsTimers[fieldId]) return;
+  toast('验证码已发送'); let t = 60;
+  const btn = document.getElementById('sms-btn-' + fieldId);
+  if (btn) { btn.textContent = `${t}s`; btn.style.color='#9DB89C'; }
+  smsTimers[fieldId] = setInterval(() => {
+    t--; if (btn) btn.textContent = `${t}s`;
+    if (t <= 0) { clearInterval(smsTimers[fieldId]); delete smsTimers[fieldId]; if(btn){btn.textContent='获取验证码';btn.style.color='#FF6F00';} }
+  }, 1000);
+}
+
+function confirmBindAccount() {
+  const formDef = ACCT_FORMS[selectedAcctType]; if(!formDef) return;
+  for (const f of formDef.fields) {
+    const el = document.getElementById(f.id);
+    if (f.required && el && !el.value.trim()) {
+      el.closest('.field').style.border='1.5px solid #C62828';
+      toast('请填写' + f.label); return;
+    }
+    if(el) el.closest('.field').style.border='';
+  }
+  let newAcct;
+  if (selectedAcctType === 'corporate') {
+    const raw=(document.getElementById('f-corp-card').value||'').replace(/\s/g,'');
+    newAcct = { type:'corporate', icon:'🏢', label:'对公银行卡', tag:'对公',
+      name: document.getElementById('f-corp-name').value,
+      bankName: document.getElementById('f-corp-bank').value,
+      cardNo: raw.length>=4 ? '**** **** **** '+raw.slice(-4) : raw };
+  } else {
+    const raw=(document.getElementById('f-per-card').value||'').replace(/\s/g,'');
+    newAcct = { type:'personal', icon:'💳', label:'个人银行卡', tag:'个人',
+      name: document.getElementById('f-per-holder').value,
+      bankName: document.getElementById('f-per-bank').value,
+      cardNo: raw.length>=4 ? '**** **** **** '+raw.slice(-4) : raw };
+  }
+  if (editingAcctId) {
+    const idx=DB.wallet.accounts.findIndex(a=>a.id===editingAcctId);
+    if(idx!==-1){newAcct.id=editingAcctId; DB.wallet.accounts[idx]=newAcct;}
+    document.getElementById('add-acct-success-title').textContent='更换成功';
+    document.getElementById('add-acct-success-desc').textContent='收款账户信息已更新。';
+  } else {
+    newAcct.id=Date.now(); DB.wallet.accounts.push(newAcct);
+    document.getElementById('add-acct-success-title').textContent='绑定成功';
+    document.getElementById('add-acct-success-desc').textContent='收款账户已成功绑定，您可以使用该账户进行提现操作。';
+  }
+  document.getElementById('add-acct-step2').style.display='none';
+  document.getElementById('add-acct-success').style.display='block';
+  toast(editingAcctId?'账户已更新 ✓':'绑定成功 ✓');
+}
+
+let authPendingType = null;
+function confirmAuth() {
+  authPendingType = selectedAcctType;
+  closeModal('modal-auth'); toast('正在跳转授权…');
+  setTimeout(() => {
+    const isWx = authPendingType==='wechat';
+    const newAcct = { id:Date.now(), type:authPendingType, icon:isWx?'💚':'🔵',
+      label:isWx?'微信支付':'支付宝', tag:isWx?'微信':'支付宝',
+      name:`王大明（${isWx?'微信':'支付宝'}）`, bankName:'', cardNo:'' };
+    DB.wallet.accounts=DB.wallet.accounts.filter(a=>a.type!==authPendingType);
+    DB.wallet.accounts.push(newAcct);
+    document.getElementById('add-acct-step1').style.display='none';
+    document.getElementById('add-acct-success-title').textContent=(isWx?'微信':'支付宝')+'绑定成功';
+    document.getElementById('add-acct-success-desc').textContent=`${isWx?'微信':'支付宝'}账户已授权绑定，可用于提现。`;
+    document.getElementById('add-acct-success').style.display='block';
+    toast((isWx?'微信':'支付宝')+'账户绑定成功 ✓');
+  }, 1200);
+}
+
+// ═══════════════════════════════════════════
+//  TRANSACTION LIST  5.3.1.4
+// ═══════════════════════════════════════════
+function initTxList(filter) {
+  filterTx(filter || 'all', document.getElementById('tx-chip-'+(filter||'all')) || document.createElement('div'));
+}
+
+function filterTx(type, el) {
+  document.querySelectorAll('[id^="tx-chip-"]').forEach(c=>c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const list = type==='all' ? DB.wallet.transactions : DB.wallet.transactions.filter(t=>t.type===type);
+  const c = document.getElementById('tx-full-list');
+  c.innerHTML = list.length ? `<div class="card">${list.map(renderTxItem).join('')}</div>`
+    : '<div style="padding:40px;text-align:center;color:#9DB89C;font-size:13px">暂无记录</div>';
+}
+
+function renderTxItem(tx) {
+  const pos = tx.amt > 0;
+  const amtStr = (pos?'+':'')+' ¥'+Math.abs(tx.amt).toFixed(2);
+  const badge = tx.status==='processing'
+    ? `<span style="font-size:10px;color:#E65100;background:rgba(230,81,0,.08);padding:1px 6px;border-radius:6px">处理中</span>`
+    : `<span style="font-size:10px;color:#2E7D32;background:rgba(46,125,50,.08);padding:1px 6px;border-radius:6px">成功</span>`;
+  return `<div class="tx-item">
+    <div class="tx-icon" style="background:${pos?'rgba(46,125,50,.10)':'rgba(255,111,0,.10)'}">${pos?'📈':'💸'}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:500;color:#1B2E1B">${tx.label}</div>
+      <div style="font-size:11px;color:#9DB89C;margin-top:2px">${tx.time}</div>
+      <div style="font-size:11px;color:#9DB89C">${tx.ref}</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:${pos?'#2E7D32':'#1B2E1B'}">${amtStr}</div>
+      <div style="margin-top:4px">${badge}</div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+//  WITHDRAW  5.3.1.5
+// ═══════════════════════════════════════════
+let selectedWithdrawAcctId = null;
+
+function initWithdraw() {
+  const s = DB.wallet.balance.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  document.getElementById('withdraw-balance').textContent = s;
+  document.getElementById('withdraw-amt').value = '';
+  document.getElementById('withdraw-err').textContent = '';
+
+  const container = document.getElementById('withdraw-acct-list');
+  const accts = DB.wallet.accounts;
+  if (!accts.length) {
+    selectedWithdrawAcctId = null;
+    container.innerHTML = `
+      <div style="background:#FFF8E1;border:1px solid #FFB74D;border-radius:10px;padding:14px;font-size:13px;color:#E65100;margin-bottom:12px">
+        ⚠️ 请先绑定收款账户</div>
+      <button class="btn btn-ghost btn-full" style="height:42px;border-radius:10px" onclick="navPage('add-account')">去绑定</button>`;
+    return;
+  }
+  selectedWithdrawAcctId = accts[0].id;
+  container.innerHTML = accts.map((a,i) => {
+    const sel = i===0;
+    return `<div class="acct-card" id="w-acct-${a.id}" onclick="selectWithdrawAcct(${a.id})"
+      style="cursor:pointer;border-color:${sel?'#FF6F00':'rgba(46,125,50,.10)'};box-shadow:${sel?'0 0 0 2px rgba(255,111,0,.15)':'none'}">
+      <div style="width:20px;height:20px;border-radius:50%;border:2px solid ${sel?'#FF6F00':'#C8E6C9'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:10px;height:10px;border-radius:50%;background:${sel?'#FF6F00':'transparent'}"></div>
+      </div>
+      <div class="acct-card-icon" style="background:${acctBg(a.type)}">${a.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:500;color:#1B2E1B">${(a.type==='wechat'||a.type==='alipay')?a.name:a.bankName+' '+a.cardNo}</div>
+        <div style="font-size:11px;color:#9DB89C">${a.tag}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectWithdrawAcct(id) {
+  selectedWithdrawAcctId = id;
+  DB.wallet.accounts.forEach(a => {
+    const card = document.getElementById('w-acct-'+a.id); if (!card) return;
+    const sel = a.id===id;
+    card.style.borderColor = sel?'#FF6F00':'rgba(46,125,50,.10)';
+    card.style.boxShadow   = sel?'0 0 0 2px rgba(255,111,0,.15)':'none';
+    const ring=card.querySelector('div:first-child'), dot=ring&&ring.querySelector('div');
+    if(ring) ring.style.borderColor=sel?'#FF6F00':'#C8E6C9';
+    if(dot)  dot.style.background  =sel?'#FF6F00':'transparent';
+  });
+}
+
+function fillAllWithdraw() {
+  document.getElementById('withdraw-amt').value = DB.wallet.balance.toFixed(2);
+  document.getElementById('withdraw-err').textContent = '';
+}
+
+function validateWithdraw() {
+  const v = parseFloat(document.getElementById('withdraw-amt').value);
+  document.getElementById('withdraw-err').textContent =
+    (v && v > DB.wallet.balance) ? '余额不足，提现金额不能超过可提现余额' : '';
+}
+
+function submitWithdraw() {
+  const amt = parseFloat(document.getElementById('withdraw-amt').value);
+  if (!amt || amt <= 0)          { toast('请输入提现金额'); return; }
+  if (amt > DB.wallet.balance)   { document.getElementById('withdraw-err').textContent='余额不足'; return; }
+  if (!DB.wallet.accounts.length){ toast('请先绑定收款账户'); return; }
+  if (!selectedWithdrawAcctId)   { toast('请选择收款账户'); return; }
+
+  const a = DB.wallet.accounts.find(x=>x.id===selectedWithdrawAcctId);
+  const ref = a ? ((a.type==='wechat'||a.type==='alipay') ? a.name : a.bankName+' '+a.cardNo.slice(-4)) : '—';
+  DB.wallet.transactions.unshift({
+    id:Date.now(), type:'withdraw',
+    time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-').replace(/(\d{4}-\d{2}-\d{2})\s/,'$1 ').slice(0,16),
+    label:'提现', ref, amt:-amt, status:'processing'
+  });
+  DB.wallet.balance = Math.round((DB.wallet.balance - amt) * 100) / 100;
+  openModal('modal-withdraw-success');
+}
+
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(mo => {
+  mo.addEventListener('click', e => { if (e.target === mo) mo.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+(function init() {
+  // Show login, hide nav
+  document.getElementById('nav').style.display = 'none';
+  document.getElementById('page-login').classList.remove('hidden');
+
+  // Set date
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  if (document.getElementById('home-date')) {
+    document.getElementById('home-date').textContent =
+      `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${days[now.getDay()]}`;
+  }
+
+  // Cleanup tracking when leaving tracking page
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('page-tracking').classList.contains('hidden')) {
+      if (trackInterval) { clearInterval(trackInterval); trackInterval = null; }
+    }
+  });
+  observer.observe(document.getElementById('page-tracking'), { attributes: true });
+})();
+</script>
+</body>
+</html>
