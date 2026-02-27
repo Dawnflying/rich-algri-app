@@ -6,14 +6,14 @@
 
 services:
   backend:
-    image: rich-algri-app-backend:latest
+    image: registry.cn-hangzhou.aliyuncs.com/jarvis-iot/rich-algri-app-backend:latest
     container_name: rich-algri-backend
     ports:
       - "8000:8000"
     restart: unless-stopped
 
   frontend:
-    image: rich-algri-app-frontend:latest
+    image: registry.cn-hangzhou.aliyuncs.com/jarvis-iot/rich-algri-app-frontend:latest
     container_name: rich-algri-frontend
     ports:
       - "80:80"
