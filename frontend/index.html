@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智农云 · 钱包</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f6fa;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; height: 100vh; overflow: hidden; }
+
+    .sidebar {
+      width: 220px;
+      background: #1a3c28;
+      color: #cde;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 16px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      letter-spacing: 1px;
+    }
+    .sidebar-logo span { color: #5dd98a; }
+    .sidebar-nav { flex: 1; padding: 12px 0; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      color: rgba(255,255,255,.7);
+      transition: background .15s, color .15s;
+      border-radius: 0;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .nav-item.active { background: rgba(93,217,138,.18); color: #5dd98a; font-weight: 600; }
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e8eaf0;
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .topbar-title { font-size: 16px; font-weight: 600; color: #1a3c28; }
+    .topbar-user { font-size: 13px; color: #888; }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 28px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a3c28;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .badge {
+      font-size: 11px;
+      background: #e8f5ee;
+      color: #2a7a4b;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    /* ── Balance Card ── */
+    .balance-card {
+      background: linear-gradient(135deg, #1a3c28 0%, #2a7a4b 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(26,60,40,.3);
+    }
+    .balance-label { font-size: 13px; opacity: .8; margin-bottom: 8px; }
+    .balance-amount { font-size: 40px; font-weight: 700; letter-spacing: -1px; }
+    .balance-amount .unit { font-size: 22px; font-weight: 400; margin-right: 4px; }
+    .balance-actions { display: flex; gap: 12px; }
+    .btn-white {
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      border: 1.5px solid rgba(255,255,255,.5);
+      border-radius: 8px;
+      padding: 9px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background .15s;
+      font-weight: 500;
+    }
+    .btn-white:hover { background: rgba(255,255,255,.35); }
+
+    /* ── Grid ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+
+    /* ── Account Cards ── */
+    .account-list { display: flex; flex-direction: column; gap: 12px; }
+    .account-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1.5px solid #eef0f5;
+      border-radius: 10px;
+      transition: border-color .15s, box-shadow .15s;
+      position: relative;
+    }
+    .account-item:hover { border-color: #5dd98a; box-shadow: 0 2px 8px rgba(93,217,138,.12); }
+    .account-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #e8f5ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .account-info { flex: 1; min-width: 0; }
+    .account-name { font-size: 14px; font-weight: 600; color: #222; }
+    .account-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .account-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #e8f5ee;
+      color: #2a7a4b;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .account-actions { display: flex; gap: 6px; }
+    .btn-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      border: 1px solid #e8eaf0;
+      background: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: background .12s, border-color .12s;
+    }
+    .btn-icon:hover { background: #f0f8f4; border-color: #5dd98a; }
+    .btn-icon.danger:hover { background: #fff0f0; border-color: #e55; }
+
+    /* ── Transactions ── */
+    .tx-filters { display: flex; gap: 8px; margin-bottom: 16px; }
+    .filter-btn {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #e8eaf0;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: #666;
+      transition: all .15s;
+    }
+    .filter-btn.active {
+      background: #1a3c28;
+      color: #fff;
+      border-color: #1a3c28;
+    }
+
+    .tx-table { width: 100%; border-collapse: collapse; }
+    .tx-table th {
+      text-align: left;
+      font-size: 12px;
+      color: #999;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .tx-table td {
+      padding: 13px 12px;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+    .tx-table tr:last-child td { border-bottom: none; }
+    .tx-table tr:hover td { background: #fafcfa; }
+
+    .tx-amount { font-weight: 600; }
+    .tx-amount.income { color: #2a7a4b; }
+    .tx-amount.withdraw { color: #e55; }
+
+    .tx-status {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tx-status.success { background: #e8f5ee; color: #2a7a4b; }
+    .tx-status.processing { background: #fff8e0; color: #b8860b; }
+
+    .tx-type-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .tx-type-badge.income { background: #e8f5ee; color: #2a7a4b; }
+    .tx-type-badge.withdraw { background: #fee; color: #c00; }
+
+    /* ── Pagination ── */
+    .pagination {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      margin-top: 16px;
+    }
+    .page-btn {
+      min-width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #e8eaf0;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .12s;
+    }
+    .page-btn:hover { border-color: #2a7a4b; color: #2a7a4b; }
+    .page-btn.active { background: #1a3c28; color: #fff; border-color: #1a3c28; }
+    .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .page-info { font-size: 13px; color: #888; padding: 0 8px; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: opacity .15s, background .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: #1a3c28; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #2a7a4b; }
+    .btn-outline {
+      background: #fff;
+      color: #444;
+      border: 1.5px solid #e0e0e0;
+    }
+    .btn-outline:hover { border-color: #aaa; }
+    .btn-danger { background: #d33; color: #fff; }
+    .btn-danger:hover { background: #b00; }
+
+    .btn-add {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      padding: 8px 16px;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #1a3c28;
+      margin-bottom: 22px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #444;
+      margin-bottom: 6px;
+    }
+    .form-label .required { color: #d33; margin-left: 2px; }
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #e0e4eb;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #222;
+      transition: border-color .15s;
+      outline: none;
+      background: #fff;
+    }
+    .form-control:focus { border-color: #2a7a4b; box-shadow: 0 0 0 3px rgba(42,122,75,.1); }
+    .form-control.error { border-color: #d33; }
+
+    .type-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+    .type-option {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 8px;
+      border: 2px solid #e8eaf0;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .15s;
+      font-size: 13px;
+    }
+    .type-option:hover { border-color: #5dd98a; }
+    .type-option.selected { border-color: #1a3c28; background: #e8f5ee; color: #1a3c28; font-weight: 600; }
+    .type-option .t-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+
+    .sms-group { display: flex; gap: 8px; }
+    .sms-group .form-control { flex: 1; }
+    .btn-sms {
+      white-space: nowrap;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #e0e4eb;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: #2a7a4b;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    .btn-sms:hover:not(:disabled) { border-color: #2a7a4b; background: #e8f5ee; }
+    .btn-sms:disabled { opacity: .5; cursor: not-allowed; color: #999; }
+
+    /* ── Withdraw amount input ── */
+    .amount-input-wrap { position: relative; }
+    .amount-input-wrap .currency {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      color: #555;
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .amount-input-wrap .form-control { padding-left: 30px; font-size: 20px; font-weight: 700; }
+
+    /* ── Toast ── */
+    .toast-wrap {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 6px 20px rgba(0,0,0,.15);
+      animation: slideDown .25s ease;
+    }
+    .toast.success { background: #1a3c28; color: #fff; }
+    .toast.error   { background: #d33; color: #fff; }
+    .toast.info    { background: #2b6cb0; color: #fff; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Empty / Loading ── */
+    .empty {
+      text-align: center;
+      padding: 40px 0;
+      color: #bbb;
+      font-size: 14px;
+    }
+    .loading-row td { text-align: center; color: #aaa; padding: 32px; }
+
+    /* ── Recent tx mini list ── */
+    .mini-tx-list { display: flex; flex-direction: column; gap: 10px; }
+    .mini-tx {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .mini-tx:last-child { border-bottom: none; }
+    .mini-tx-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .mini-tx-icon.income { background: #e8f5ee; }
+    .mini-tx-icon.withdraw { background: #fee; }
+    .mini-tx-info { flex: 1; min-width: 0; }
+    .mini-tx-label { font-size: 13px; font-weight: 500; }
+    .mini-tx-ref { font-size: 11px; color: #999; margin-top: 1px; }
+    .mini-tx-right { text-align: right; flex-shrink: 0; }
+    .mini-tx-amount { font-size: 14px; font-weight: 700; }
+    .mini-tx-amount.income { color: #2a7a4b; }
+    .mini-tx-amount.withdraw { color: #d33; }
+    .mini-tx-time { font-size: 11px; color: #bbb; margin-top: 1px; }
+
+    /* ── Confirm dialog ── */
+    .confirm-body { font-size: 15px; color: #444; line-height: 1.6; margin-bottom: 4px; }
+    .confirm-sub { font-size: 13px; color: #999; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- Toast notifications -->
+  <div class="toast-wrap">
+    <div v-for="t in toasts" :key="t.id" :class="['toast', t.type]">{{ t.msg }}</div>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">智农<span>云</span></div>
+      <nav class="sidebar-nav">
+        <div
+          v-for="item in navItems"
+          :key="item.key"
+          :class="['nav-item', { active: page === item.key }]"
+          @click="switchPage(item.key)"
+        >
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title">{{ currentPageTitle }}</div>
+        <div class="topbar-user">王大明 · 农场主</div>
+      </div>
+
+      <div class="content">
+
+        <!-- ═══════════════════════════════════════
+             PAGE: 钱包首页 (5.3.1.1)
+        ════════════════════════════════════════ -->
+        <template v-if="page === 'home'">
+          <!-- Balance card -->
+          <div class="balance-card">
+            <div>
+              <div class="balance-label">可提现余额（元）</div>
+              <div class="balance-amount">
+                <span class="unit">¥</span>{{ formatMoney(wallet.balance) }}
+              </div>
+            </div>
+            <div class="balance-actions">
+              <button class="btn-white" @click="switchPage('withdraw')">立即提现</button>
+              <button class="btn-white" @click="switchPage('transactions')">收支明细</button>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <!-- Recent transactions -->
+            <div class="card">
+              <div class="card-title">
+                📋 最近交易
+                <span class="badge">最近3条</span>
+              </div>
+              <div v-if="loadingHome" class="empty">加载中…</div>
+              <div v-else-if="wallet.recent_transactions.length === 0" class="empty">暂无交易记录</div>
+              <div v-else class="mini-tx-list">
+                <div v-for="tx in wallet.recent_transactions" :key="tx.id" class="mini-tx">
+                  <div :class="['mini-tx-icon', tx.type]">
+                    {{ tx.type === 'income' ? '💰' : '💸' }}
+                  </div>
+                  <div class="mini-tx-info">
+                    <div class="mini-tx-label">{{ tx.label }}</div>
+                    <div class="mini-tx-ref">{{ tx.ref }}</div>
+                  </div>
+                  <div class="mini-tx-right">
+                    <div :class="['mini-tx-amount', tx.type]">
+                      {{ tx.amount > 0 ? '+' : '' }}{{ formatMoney(tx.amount) }}
+                    </div>
+                    <div class="mini-tx-time">{{ tx.time }}</div>
+                  </div>
+                </div>
+              </div>
+              <div style="margin-top:14px; text-align:center;">
+                <button class="btn btn-outline" style="font-size:13px;padding:7px 18px;" @click="switchPage('transactions')">查看全部明细 →</button>
+              </div>
+            </div>
+
+            <!-- Accounts -->
+            <div class="card">
+              <div class="card-title">
+                🏦 收款账户
+                <span class="badge">{{ wallet.accounts.length }} 个</span>
+              </div>
+              <div v-if="loadingHome" class="empty">加载中…</div>
+              <div v-else-if="wallet.accounts.length === 0" class="empty">暂未绑定账户</div>
+              <div v-else class="account-list">
+                <div v-for="acc in wallet.accounts" :key="acc.id" class="account-item">
+                  <div class="account-icon">{{ acc.icon }}</div>
+                  <div class="account-info">
+                    <div class="account-name">{{ acc.name || acc.label }}</div>
+                    <div class="account-sub">{{ acc.bank_name ? acc.bank_name + ' · ' : '' }}{{ acc.card_no }}</div>
+                  </div>
+                  <span class="account-tag">{{ acc.tag }}</span>
+                </div>
+              </div>
+              <div style="margin-top:14px; text-align:center;">
+                <button class="btn btn-outline" style="font-size:13px;padding:7px 18px;" @click="switchPage('accounts')">管理账户 →</button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════
+             PAGE: 收款账户管理 (5.3.1.2 / 5.3.1.3)
+        ════════════════════════════════════════ -->
+        <template v-else-if="page === 'accounts'">
+          <div class="card">
+            <div class="card-title" style="justify-content:space-between;">
+              <span>🏦 收款账户管理</span>
+              <button class="btn btn-primary btn-add" @click="openAddAccount">
+                <span>＋</span> 添加账户
+              </button>
+            </div>
+
+            <div v-if="loadingAccounts" class="empty">加载中…</div>
+            <div v-else-if="accounts.length === 0" class="empty">暂无收款账户，请点击"添加账户"</div>
+            <div v-else class="account-list">
+              <div v-for="acc in accounts" :key="acc.id" class="account-item">
+                <div class="account-icon">{{ acc.icon }}</div>
+                <div class="account-info">
+                  <div class="account-name">{{ acc.name || acc.label }}</div>
+                  <div class="account-sub">{{ acc.bank_name ? acc.bank_name + ' · ' : '' }}{{ acc.card_no }}</div>
+                </div>
+                <span class="account-tag">{{ acc.tag }}</span>
+                <div class="account-actions">
+                  <button class="btn-icon" title="编辑" @click="openEditAccount(acc)">✏️</button>
+                  <button class="btn-icon danger" title="删除" @click="confirmDeleteAccount(acc)">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════
+             PAGE: 收支明细 (5.3.1.4)
+        ════════════════════════════════════════ -->
+        <template v-else-if="page === 'transactions'">
+          <div class="card">
+            <div class="card-title">📋 收支明细</div>
+
+            <div class="tx-filters">
+              <button
+                v-for="f in txFilters"
+                :key="f.value"
+                :class="['filter-btn', { active: txFilter === f.value }]"
+                @click="setTxFilter(f.value)"
+              >{{ f.label }}</button>
+            </div>
+
+            <table class="tx-table">
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>时间</th>
+                  <th>摘要</th>
+                  <th>账户/订单</th>
+                  <th>状态</th>
+                  <th style="text-align:right">金额（元）</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="loadingTx">
+                  <td colspan="6" style="text-align:center;color:#aaa;padding:32px;">加载中…</td>
+                </tr>
+                <tr v-else-if="txList.length === 0">
+                  <td colspan="6" style="text-align:center;color:#bbb;padding:32px;">暂无记录</td>
+                </tr>
+                <tr v-for="tx in txList" :key="tx.id" v-else>
+                  <td>
+                    <span :class="['tx-type-badge', tx.type]">
+                      {{ tx.type === 'income' ? '收入' : '提现' }}
+                    </span>
+                  </td>
+                  <td style="color:#888;font-size:12px;white-space:nowrap">{{ tx.time }}</td>
+                  <td>{{ tx.label }}</td>
+                  <td style="color:#666">{{ tx.ref }}</td>
+                  <td>
+                    <span :class="['tx-status', tx.status]">
+                      {{ tx.status === 'success' ? '成功' : '处理中' }}
+                    </span>
+                  </td>
+                  <td style="text-align:right">
+                    <span :class="['tx-amount', tx.type]">
+                      {{ tx.amount > 0 ? '+' : '' }}{{ formatMoney(tx.amount) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="pagination" v-if="txTotal > 0">
+              <span class="page-info">共 {{ txTotal }} 条</span>
+              <button class="page-btn" :disabled="txPage <= 1" @click="gotoTxPage(txPage - 1)">‹</button>
+              <button
+                v-for="p in txPageRange"
+                :key="p"
+                :class="['page-btn', { active: p === txPage }]"
+                @click="gotoTxPage(p)"
+              >{{ p }}</button>
+              <button class="page-btn" :disabled="!txHasMore" @click="gotoTxPage(txPage + 1)">›</button>
+            </div>
+          </div>
+        </template>
+
+        <!-- ═══════════════════════════════════════
+             PAGE: 提现 (5.3.1.5)
+        ════════════════════════════════════════ -->
+        <template v-else-if="page === 'withdraw'">
+          <div style="max-width:520px; margin: 0 auto;">
+            <div class="balance-card" style="margin-bottom:20px;">
+              <div>
+                <div class="balance-label">可提现余额（元）</div>
+                <div class="balance-amount"><span class="unit">¥</span>{{ formatMoney(wallet.balance) }}</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">💸 申请提现</div>
+
+              <div class="form-group">
+                <label class="form-label">提现金额<span class="required">*</span></label>
+                <div class="amount-input-wrap">
+                  <span class="currency">¥</span>
+                  <input
+                    class="form-control"
+                    :class="{ error: wdErrors.amount }"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="请输入金额"
+                    v-model="wdForm.amount"
+                  />
+                </div>
+                <div v-if="wdErrors.amount" style="color:#d33;font-size:12px;margin-top:4px;">{{ wdErrors.amount }}</div>
+                <div style="margin-top:6px;">
+                  <button
+                    v-for="preset in [100, 500, 1000, 3000]"
+                    :key="preset"
+                    class="btn btn-outline"
+                    style="font-size:12px;padding:4px 12px;margin-right:6px;margin-top:4px;"
+                    @click="wdForm.amount = preset"
+                  >¥{{ preset }}</button>
+                  <button
+                    class="btn btn-outline"
+                    style="font-size:12px;padding:4px 12px;margin-top:4px;"
+                    @click="wdForm.amount = wallet.balance"
+                  >全部提现</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">收款账户<span class="required">*</span></label>
+                <div v-if="accounts.length === 0" style="color:#999;font-size:13px;padding:10px 0;">
+                  暂无收款账户，请先
+                  <span style="color:#2a7a4b;cursor:pointer;text-decoration:underline;" @click="switchPage('accounts')">添加账户</span>
+                </div>
+                <div v-else style="display:flex;flex-direction:column;gap:8px;">
+                  <div
+                    v-for="acc in accounts"
+                    :key="acc.id"
+                    :class="['account-item', { 'account-item-selected': wdForm.account_id === acc.id }]"
+                    style="cursor:pointer;"
+                    @click="wdForm.account_id = acc.id"
+                  >
+                    <div class="account-icon">{{ acc.icon }}</div>
+                    <div class="account-info">
+                      <div class="account-name">{{ acc.name || acc.label }}</div>
+                      <div class="account-sub">{{ acc.bank_name ? acc.bank_name + ' · ' : '' }}{{ acc.card_no }}</div>
+                    </div>
+                    <span class="account-tag">{{ acc.tag }}</span>
+                    <span v-if="wdForm.account_id === acc.id" style="color:#2a7a4b;font-size:18px;">✓</span>
+                  </div>
+                </div>
+                <div v-if="wdErrors.account_id" style="color:#d33;font-size:12px;margin-top:4px;">{{ wdErrors.account_id }}</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">安全验证<span class="required">*</span></label>
+                <div class="sms-group">
+                  <input
+                    class="form-control"
+                    :class="{ error: wdErrors.sms }"
+                    type="text"
+                    placeholder="请输入短信验证码"
+                    v-model="wdForm.sms"
+                    maxlength="6"
+                  />
+                  <button
+                    class="btn-sms"
+                    :disabled="smsCooldown > 0"
+                    @click="sendSms"
+                  >
+                    {{ smsCooldown > 0 ? `${smsCooldown}s 后重发` : '获取验证码' }}
+                  </button>
+                </div>
+                <div v-if="wdErrors.sms" style="color:#d33;font-size:12px;margin-top:4px;">{{ wdErrors.sms }}</div>
+              </div>
+
+              <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px;">
+                <button class="btn btn-outline" @click="switchPage('home')">取消</button>
+                <button class="btn btn-primary" :disabled="submittingWd" @click="submitWithdraw">
+                  {{ submittingWd ? '提交中…' : '确认提现' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
+
+      </div><!-- /content -->
+    </div><!-- /main -->
+  </div><!-- /app -->
+
+  <!-- ══════════════════════
+       Modal: Add / Edit Account
+  ══════════════════════ -->
+  <div class="modal-overlay" v-if="showAccountModal" @click.self="closeAccountModal">
+    <div class="modal">
+      <div class="modal-title">{{ accountModal.isEdit ? '修改收款账户' : '添加收款账户' }}</div>
+
+      <!-- Type selector (only for new) -->
+      <div class="form-group" v-if="!accountModal.isEdit">
+        <label class="form-label">账户类型<span class="required">*</span></label>
+        <div class="type-selector">
+          <div
+            v-for="t in accountTypes"
+            :key="t.value"
+            :class="['type-option', { selected: accountForm.type === t.value }]"
+            @click="accountForm.type = t.value"
+          >
+            <span class="t-icon">{{ t.icon }}</span>
+            {{ t.label }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div class="form-group">
+        <label class="form-label">
+          {{ accountForm.type === 'corporate' ? '公司名称' : (accountForm.type === 'personal' ? '持卡人姓名' : '账户名称') }}
+          <span class="required">*</span>
+        </label>
+        <input
+          class="form-control"
+          :class="{ error: accountErrors.name }"
+          type="text"
+          v-model="accountForm.name"
+          placeholder="请输入名称"
+        />
+        <div v-if="accountErrors.name" style="color:#d33;font-size:12px;margin-top:4px;">{{ accountErrors.name }}</div>
+      </div>
+
+      <!-- Bank name (only for bank accounts) -->
+      <div class="form-group" v-if="['corporate','personal'].includes(accountForm.type)">
+        <label class="form-label">开户银行<span class="required">*</span></label>
+        <input
+          class="form-control"
+          :class="{ error: accountErrors.bank_name }"
+          type="text"
+          v-model="accountForm.bank_name"
+          placeholder="如：建设银行、农业银行"
+        />
+        <div v-if="accountErrors.bank_name" style="color:#d33;font-size:12px;margin-top:4px;">{{ accountErrors.bank_name }}</div>
+      </div>
+
+      <!-- Card no -->
+      <div class="form-group">
+        <label class="form-label">
+          {{ ['corporate','personal'].includes(accountForm.type) ? '银行卡号' : '账号/手机号' }}
+          <span class="required">*</span>
+        </label>
+        <input
+          class="form-control"
+          :class="{ error: accountErrors.card_no }"
+          type="text"
+          v-model="accountForm.card_no"
+          :placeholder="['corporate','personal'].includes(accountForm.type) ? '请输入银行卡号（后4位将被脱敏）' : '请输入账号或手机号'"
+        />
+        <div v-if="accountErrors.card_no" style="color:#d33;font-size:12px;margin-top:4px;">{{ accountErrors.card_no }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" @click="closeAccountModal">取消</button>
+        <button class="btn btn-primary" :disabled="savingAccount" @click="saveAccount">
+          {{ savingAccount ? '保存中…' : (accountModal.isEdit ? '保存修改' : '添加账户') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════
+       Modal: Confirm Delete
+  ══════════════════════ -->
+  <div class="modal-overlay" v-if="confirmModal.show" @click.self="confirmModal.show = false">
+    <div class="modal" style="width:380px;">
+      <div class="modal-title">确认删除</div>
+      <div class="confirm-body">是否删除账户 <strong>{{ confirmModal.name }}</strong>？</div>
+      <div class="confirm-sub" style="margin-top:6px;">删除后无法恢复，提现将无法使用该账户。</div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" @click="confirmModal.show = false">取消</button>
+        <button class="btn btn-danger" :disabled="deletingAccount" @click="doDeleteAccount">
+          {{ deletingAccount ? '删除中…' : '确认删除' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<style>
+  .account-item-selected {
+    border-color: #2a7a4b !important;
+    background: #f0faf4;
+  }
+</style>
+
+<script>
+const { createApp, ref, computed, onMounted, watch } = Vue;
+
+const API = '/api';
+
+createApp({
+  setup() {
+    // ── Toast ──────────────────────────────
+    const toasts = ref([]);
+    let toastId = 0;
+    function toast(msg, type = 'success') {
+      const id = ++toastId;
+      toasts.value.push({ id, msg, type });
+      setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id); }, 3000);
+    }
+
+    // ── Nav ────────────────────────────────
+    const navItems = [
+      { key: 'home',         icon: '🏠', label: '钱包首页' },
+      { key: 'accounts',     icon: '🏦', label: '收款账户' },
+      { key: 'transactions', icon: '📋', label: '收支明细' },
+      { key: 'withdraw',     icon: '💸', label: '申请提现' },
+    ];
+    const page = ref('home');
+    const pageTitles = { home: '钱包首页', accounts: '收款账户管理', transactions: '收支明细', withdraw: '申请提现' };
+    const currentPageTitle = computed(() => pageTitles[page.value] || '钱包');
+
+    function switchPage(p) {
+      page.value = p;
+      if (p === 'home') fetchHome();
+      if (p === 'accounts') fetchAccounts();
+      if (p === 'transactions') fetchTransactions();
+      if (p === 'withdraw') { fetchHome(); fetchAccounts(); }
+    }
+
+    // ── Wallet / Home ──────────────────────
+    const wallet = ref({ balance: 0, accounts: [], recent_transactions: [] });
+    const loadingHome = ref(false);
+
+    async function fetchHome() {
+      loadingHome.value = true;
+      try {
+        const r = await fetch(`${API}/wallet/summary`);
+        wallet.value = await r.json();
+      } catch { toast('加载失败，请重试', 'error'); }
+      finally { loadingHome.value = false; }
+    }
+
+    // ── Accounts ──────────────────────────
+    const accounts = ref([]);
+    const loadingAccounts = ref(false);
+
+    async function fetchAccounts() {
+      loadingAccounts.value = true;
+      try {
+        const r = await fetch(`${API}/wallet/accounts`);
+        accounts.value = await r.json();
+      } catch { toast('加载账户失败', 'error'); }
+      finally { loadingAccounts.value = false; }
+    }
+
+    // Add / Edit modal
+    const showAccountModal = ref(false);
+    const accountModal = ref({ isEdit: false, id: null });
+    const accountForm = ref({ type: 'personal', name: '', bank_name: '', card_no: '' });
+    const accountErrors = ref({});
+    const savingAccount = ref(false);
+
+    const accountTypes = [
+      { value: 'corporate', icon: '🏢', label: '对公银行卡' },
+      { value: 'personal',  icon: '💳', label: '个人银行卡' },
+      { value: 'wechat',    icon: '💚', label: '微信支付' },
+      { value: 'alipay',    icon: '🔵', label: '支付宝' },
+    ];
+
+    function openAddAccount() {
+      accountModal.value = { isEdit: false, id: null };
+      accountForm.value = { type: 'personal', name: '', bank_name: '', card_no: '' };
+      accountErrors.value = {};
+      showAccountModal.value = true;
+    }
+
+    function openEditAccount(acc) {
+      accountModal.value = { isEdit: true, id: acc.id };
+      accountForm.value = { type: acc.type, name: acc.name, bank_name: acc.bank_name || '', card_no: '' };
+      accountErrors.value = {};
+      showAccountModal.value = true;
+    }
+
+    function closeAccountModal() { showAccountModal.value = false; }
+
+    function validateAccountForm() {
+      const errs = {};
+      if (!accountForm.value.name.trim()) errs.name = '请输入名称';
+      if (['corporate', 'personal'].includes(accountForm.value.type) && !accountForm.value.bank_name.trim())
+        errs.bank_name = '请输入开户银行';
+      if (!accountModal.value.isEdit && !accountForm.value.card_no.trim())
+        errs.card_no = '请输入账号';
+      if (accountModal.value.isEdit && accountForm.value.card_no && accountForm.value.card_no.trim().length < 4)
+        errs.card_no = '卡号至少 4 位';
+      accountErrors.value = errs;
+      return Object.keys(errs).length === 0;
+    }
+
+    async function saveAccount() {
+      if (!validateAccountForm()) return;
+      savingAccount.value = true;
+      try {
+        let r;
+        if (accountModal.value.isEdit) {
+          const body = { name: accountForm.value.name, bank_name: accountForm.value.bank_name };
+          if (accountForm.value.card_no) body.card_no = accountForm.value.card_no;
+          r = await fetch(`${API}/wallet/accounts/${accountModal.value.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+        } else {
+          r = await fetch(`${API}/wallet/accounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(accountForm.value),
+          });
+        }
+        if (r.ok) {
+          toast(accountModal.value.isEdit ? '账户已更新' : '账户已添加');
+          closeAccountModal();
+          fetchAccounts();
+        } else {
+          const d = await r.json();
+          toast(d.error || '操作失败', 'error');
+        }
+      } catch { toast('网络错误', 'error'); }
+      finally { savingAccount.value = false; }
+    }
+
+    // Delete
+    const confirmModal = ref({ show: false, id: null, name: '' });
+    const deletingAccount = ref(false);
+
+    function confirmDeleteAccount(acc) {
+      confirmModal.value = { show: true, id: acc.id, name: acc.name || acc.label };
+    }
+
+    async function doDeleteAccount() {
+      deletingAccount.value = true;
+      try {
+        const r = await fetch(`${API}/wallet/accounts/${confirmModal.value.id}`, { method: 'DELETE' });
+        if (r.ok) {
+          toast('账户已删除');
+          confirmModal.value.show = false;
+          fetchAccounts();
+        } else {
+          const d = await r.json();
+          toast(d.error || '删除失败', 'error');
+        }
+      } catch { toast('网络错误', 'error'); }
+      finally { deletingAccount.value = false; }
+    }
+
+    // ── Transactions ───────────────────────
+    const txList = ref([]);
+    const txFilter = ref('all');
+    const txPage = ref(1);
+    const txTotal = ref(0);
+    const txHasMore = ref(false);
+    const loadingTx = ref(false);
+    const txPageSize = 5;
+
+    const txFilters = [
+      { value: 'all',      label: '全部' },
+      { value: 'income',   label: '收入' },
+      { value: 'withdraw', label: '提现' },
+    ];
+
+    const txPageRange = computed(() => {
+      const total = Math.ceil(txTotal.value / txPageSize);
+      const p = txPage.value;
+      const pages = [];
+      for (let i = Math.max(1, p - 2); i <= Math.min(total, p + 2); i++) pages.push(i);
+      return pages;
+    });
+
+    async function fetchTransactions() {
+      loadingTx.value = true;
+      try {
+        const url = `${API}/wallet/transactions?type=${txFilter.value}&page=${txPage.value}&page_size=${txPageSize}`;
+        const r = await fetch(url);
+        const d = await r.json();
+        txList.value = d.list;
+        txTotal.value = d.total;
+        txHasMore.value = d.has_more;
+      } catch { toast('加载明细失败', 'error'); }
+      finally { loadingTx.value = false; }
+    }
+
+    function setTxFilter(f) {
+      txFilter.value = f;
+      txPage.value = 1;
+      fetchTransactions();
+    }
+
+    function gotoTxPage(p) {
+      txPage.value = p;
+      fetchTransactions();
+    }
+
+    // ── Withdraw ──────────────────────────
+    const wdForm = ref({ amount: '', account_id: null, sms: '' });
+    const wdErrors = ref({});
+    const submittingWd = ref(false);
+    const smsCooldown = ref(0);
+    let smsTimer = null;
+
+    async function sendSms() {
+      const r = await fetch(`${API}/auth/send-sms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: '13800138000' }),
+      });
+      if (r.ok) {
+        toast('验证码已发送（演示：任意6位数字）', 'info');
+        smsCooldown.value = 60;
+        smsTimer = setInterval(() => {
+          smsCooldown.value--;
+          if (smsCooldown.value <= 0) clearInterval(smsTimer);
+        }, 1000);
+      }
+    }
+
+    function validateWithdraw() {
+      const errs = {};
+      const amt = parseFloat(wdForm.value.amount);
+      if (!wdForm.value.amount || isNaN(amt) || amt <= 0) errs.amount = '请输入有效的提现金额';
+      else if (amt > wallet.value.balance) errs.amount = `金额不能超过可提现余额 ¥${formatMoney(wallet.value.balance)}`;
+      if (!wdForm.value.account_id) errs.account_id = '请选择收款账户';
+      if (!wdForm.value.sms || wdForm.value.sms.length < 4) errs.sms = '请输入验证码';
+      wdErrors.value = errs;
+      return Object.keys(errs).length === 0;
+    }
+
+    async function submitWithdraw() {
+      if (!validateWithdraw()) return;
+      submittingWd.value = true;
+      try {
+        const r = await fetch(`${API}/wallet/withdraw`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: parseFloat(wdForm.value.amount), account_id: wdForm.value.account_id }),
+        });
+        const d = await r.json();
+        if (r.ok) {
+          wallet.value.balance = d.new_balance;
+          wdForm.value = { amount: '', account_id: null, sms: '' };
+          wdErrors.value = {};
+          toast('提现申请已提交，预计 1–3 个工作日到账');
+        } else {
+          toast(d.error || '提现失败', 'error');
+        }
+      } catch { toast('网络错误', 'error'); }
+      finally { submittingWd.value = false; }
+    }
+
+    // ── Utilities ─────────────────────────
+    function formatMoney(n) {
+      const num = parseFloat(n);
+      if (isNaN(num)) return '0.00';
+      return num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ── Init ──────────────────────────────
+    onMounted(() => {
+      fetchHome();
+      fetchAccounts();
+    });
+
+    return {
+      toasts, navItems, page, currentPageTitle, switchPage,
+      wallet, loadingHome,
+      accounts, loadingAccounts,
+      showAccountModal, accountModal, accountForm, accountErrors, savingAccount, accountTypes,
+      openAddAccount, openEditAccount, closeAccountModal, saveAccount,
+      confirmModal, deletingAccount, confirmDeleteAccount, doDeleteAccount,
+      txList, txFilter, txPage, txTotal, txHasMore, txPageRange, txFilters, loadingTx,
+      setTxFilter, gotoTxPage,
+      wdForm, wdErrors, submittingWd, smsCooldown, sendSms, submitWithdraw,
+      formatMoney,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
