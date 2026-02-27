@@ -1,0 +1,29 @@
+# 智农云 · Docker Compose
+# 用法:
+#   docker compose up -d              # 启动后端+前端
+#   docker compose up -d backend      # 仅启动后端
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: rich-algri-app-backend:latest
+    container_name: rich-algri-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # 前端静态资源（Nginx 托管，API 代理到 backend）
+  frontend:
+    image: rich-algri-app-frontend:latest
+    # 单独构建: docker build -t rich-algri-app-frontend:latest -f Dockerfile.frontend .
+    container_name: rich-algri-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

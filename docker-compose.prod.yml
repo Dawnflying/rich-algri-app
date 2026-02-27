@@ -1,0 +1,22 @@
+# 智农云 · 生产环境 - 直接启动已构建镜像
+# 用法: docker compose -f docker-compose.prod.yml up -d
+# 前置: 需先构建镜像
+#   docker build -t rich-algri-app-backend:latest -f backend/Dockerfile backend/
+#   docker build -t rich-algri-app-frontend:latest -f Dockerfile.frontend .
+
+services:
+  backend:
+    image: rich-algri-app-backend:latest
+    container_name: rich-algri-backend
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    image: rich-algri-app-frontend:latest
+    container_name: rich-algri-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
